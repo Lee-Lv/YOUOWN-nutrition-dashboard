@@ -121,7 +121,7 @@ function MacroCard({
 }
 
 export default async function Home() {
-  const { entries, targets, available } = await getDashboardData();
+  const { entries, targets, available, source } = await getDashboardData();
   const today = isoTodayInTokyo();
   const latestDate = entries[0]?.entryDate;
   const selectedDate = latestDate ?? today;
@@ -154,9 +154,9 @@ export default async function Home() {
             <span className="brand-mark"><Utensils size={18} /></span>
             <span>饮食 Dashboard</span>
           </div>
-          <div className={`sync-status ${available ? "is-live" : ""}`}>
+          <div className={`sync-status ${source === "sheets" ? "is-live" : ""}`}>
             <span />
-            {available ? "数据已同步" : "正在初始化"}
+            {source === "sheets" ? "Google Sheet 实时" : available ? "显示缓存" : "正在连接"}
           </div>
         </header>
 
@@ -293,7 +293,7 @@ export default async function Home() {
         </section>
 
         <footer>
-          <span>刷新页面即可查看最新记录</span>
+          <span>刷新页面即可读取 Google Sheet 最新记录</span>
           <span>Asia / Tokyo</span>
         </footer>
       </div>
