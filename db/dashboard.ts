@@ -32,6 +32,14 @@ export type NutritionTargets = {
   salt: number;
 };
 
+export type ForecastMetrics = {
+  currentWeightKg: number;
+  basalMetabolicRate: number;
+  baselineBurnCalories: number;
+  activityFactor: number;
+  kcalPerKg: number;
+};
+
 export type DashboardSource = "sheets" | "cache" | "none";
 
 export const defaultTargets: NutritionTargets = {
@@ -43,6 +51,14 @@ export const defaultTargets: NutritionTargets = {
   salt: 7.5,
 };
 
+export const defaultForecastMetrics: ForecastMetrics = {
+  currentWeightKg: 90.8,
+  basalMetabolicRate: 1796,
+  baselineBurnCalories: 2155.2,
+  activityFactor: 1.2,
+  kcalPerKg: 7700,
+};
+
 type RuntimeEnv = {
   GOOGLE_SHEET_ENDPOINT?: string;
   GOOGLE_SHEET_TOKEN?: string;
@@ -52,6 +68,7 @@ type SheetBridgePayload = {
   ok?: boolean;
   entries?: MealEntry[];
   targets?: Partial<NutritionTargets>;
+  metrics?: Partial<ForecastMetrics>;
 };
 
 function numeric(value: unknown) {
@@ -123,6 +140,7 @@ async function getSheetData() {
   return {
     entries,
     targets: { ...defaultTargets, ...(payload.targets ?? {}) },
+    metrics: { ...defaultForecastMetrics, ...(payload.metrics ?? {}) },
   };
 }
 
@@ -140,6 +158,7 @@ async function getCachedData() {
   return {
     entries: entries as MealEntry[],
     targets: targets[0] ?? defaultTargets,
+    metrics: defaultForecastMetrics,
   };
 }
 
@@ -155,6 +174,7 @@ export async function getDashboardData() {
       return {
         entries: [] as MealEntry[],
         targets: defaultTargets,
+        metrics: defaultForecastMetrics,
         available: false,
         source: "none" as DashboardSource,
       };

@@ -7,7 +7,12 @@ import {
   Utensils,
   Wheat,
 } from "lucide-react";
-import { getDashboardData, type MealEntry } from "../db/dashboard";
+import {
+  defaultForecastMetrics,
+  getDashboardData,
+  type ForecastMetrics,
+  type MealEntry,
+} from "../db/dashboard";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -70,6 +75,44 @@ function addDays(date: string, amount: number) {
   return parsed.toISOString().slice(0, 10);
 }
 
+function daysBetween(start: string, end: string) {
+  return Math.round(
+    (Date.parse(`${end}T00:00:00Z`) - Date.parse(`${start}T00:00:00Z`)) /
+      86400000,
+  );
+}
+
+function buildDateRange(start: string, end: string) {
+  return Array.from({ length: Math.max(0, daysBetween(start, end) + 1) }, (_, index) =>
+    addDays(start, index),
+  );
+}
+
+function buildDailyCalories(entries: MealEntry[]) {
+  const daily = new Map<string, number>();
+  for (const entry of entries) {
+    daily.set(entry.entryDate, (daily.get(entry.entryDate) ?? 0) + entry.calories);
+  }
+  return daily;
+}
+
+function buildForecast(
+  selectedDate: string,
+  metrics: ForecastMetrics,
+  targets: Totals,
+) {
+  const intake = targets.calories;
+  const dailyGap = metrics.baselineBurnCalories - intake;
+
+  return buildDateRange(selectedDate, addDays(selectedDate, 30)).map((date, index) => ({
+    date,
+    intake,
+    dailyGap,
+    predictedWeight:
+      metrics.currentWeightKg - (dailyGap * index) / metrics.kcalPerKg,
+  }));
+}
+
 function dateLabel(date: string) {
   return new Intl.DateTimeFormat("zh-CN", {
     timeZone: "UTC",
@@ -121,7 +164,7 @@ function MacroCard({
 }
 
 export default async function Home() {
-  const { entries, targets, available, source } = await getDashboardData();
+  const { entries, targets, metrics = defaultForecastMetrics, available, source } = await getDashboardData();
   const today = isoTodayInTokyo();
   const latestDate = entries[0]?.entryDate;
   const selectedDate = latestDate ?? today;
@@ -137,12 +180,37 @@ export default async function Home() {
     groupedByDate.set(entry.entryDate, [...(groupedByDate.get(entry.entryDate) ?? []), entry]);
   }
 
-  const week = Array.from({ length: 7 }, (_, index) => addDays(selectedDate, index - 6)).map(
-    (date) => ({ date, total: sumEntries(groupedByDate.get(date) ?? []).calories }),
+  const dailyCalories = buildDailyCalories(entries);
+  const earliestDate = entries.reduce(
+    (earliest, entry) => (entry.entryDate < earliest ? entry.entryDate : earliest),
+    selectedDate,
   );
-  const chartMax = Math.max(targets.calories * 1.15, ...week.map((day) => day.total), 1);
+  const timelineDates = buildDateRange(addDays(earliestDate, -2), addDays(selectedDate, 30));
+  const timelineDays = timelineDates.map((date) => ({
+    date,
+    actualCalories: dailyCalories.has(date) ? dailyCalories.get(date) ?? 0 : null,
+    isForecast: date > selectedDate,
+  }));
+  const chartMax = Math.max(
+    targets.calories * 1.15,
+    ...timelineDays.map((day) => day.actualCalories ?? 0),
+    1,
+  );
   const targetLine = Math.min(100, (targets.calories / chartMax) * 100);
   const lastUpdated = entries[0]?.recordedAt ?? null;
+  const forecast = buildForecast(selectedDate, metrics, targets);
+  const forecastGap = forecast[0]?.dailyGap ?? metrics.baselineBurnCalories - targets.calories;
+  const forecastWeightEnd = forecast[forecast.length - 1]?.predictedWeight ?? metrics.currentWeightKg;
+  const forecastWeightChange = forecastWeightEnd - metrics.currentWeightKg;
+  const weightMin = Math.min(...forecast.map((day) => day.predictedWeight)) - 0.35;
+  const weightMax = Math.max(...forecast.map((day) => day.predictedWeight)) + 0.35;
+  const weightPoints = forecast
+    .map((day, index) => {
+      const x = (index / Math.max(1, forecast.length - 1)) * 1000;
+      const y = 145 - ((day.predictedWeight - weightMin) / Math.max(0.1, weightMax - weightMin)) * 115;
+      return `${x},${y}`;
+    })
+    .join(" ");
 
   return (
     <main className="dashboard-shell">
@@ -235,24 +303,43 @@ export default async function Home() {
           <article className="panel trend-panel">
             <div className="panel-heading">
               <div>
-                <p className="eyebrow">近 7 天</p>
+                <p className="eyebrow">历史＋未来 30 天</p>
                 <h2>热量趋势</h2>
               </div>
-              <span className="target-legend"><i />目标线</span>
+              <div className="trend-legend">
+                <span className="target-legend"><i />目标线</span>
+                <span className="actual-legend"><i />实际</span>
+                <span className="forecast-legend"><i />预测</span>
+              </div>
             </div>
-            <div className="chart" aria-label="近七天热量趋势">
-              <div className="target-line" style={{ bottom: `${targetLine}%` }} />
-              {week.map((day) => {
-                const height = Math.max(day.total ? 8 : 2, (day.total / chartMax) * 100);
-                return (
-                  <div className="bar-slot" key={day.date}>
-                    <span className="bar-value">{day.total ? Math.round(day.total) : ""}</span>
-                    <div className={`bar ${day.date === selectedDate ? "active" : ""}`} style={{ height: `${height}%` }} />
-                    <span className="bar-date">{shortDate(day.date)}</span>
-                  </div>
-                );
-              })}
+            <div className="chart-scroll" tabIndex={0} aria-label="横向滚动查看全部历史和未来热量趋势">
+              <div
+                className="chart"
+                style={{ "--columns": timelineDays.length } as CSSProperties}
+              >
+                <div className="target-line" style={{ bottom: `${targetLine}%` }} />
+                {timelineDays.map((day) => {
+                  const total = day.actualCalories ?? (day.isForecast ? targets.calories : 0);
+                  const height = Math.max(total ? 8 : 2, (total / chartMax) * 100);
+                  const label = day.actualCalories !== null
+                    ? Math.round(day.actualCalories).toLocaleString("zh-CN")
+                    : day.date === addDays(selectedDate, 1)
+                      ? "预测"
+                      : "";
+                  return (
+                    <div className="bar-slot" key={day.date}>
+                      <span className="bar-value">{label}</span>
+                      <div
+                        className={`bar ${day.date === selectedDate ? "active" : ""} ${day.isForecast ? "forecast" : ""} ${day.actualCalories === null && !day.isForecast ? "empty" : ""}`}
+                        style={{ height: `${height}%` }}
+                      />
+                      <span className="bar-date">{shortDate(day.date)}</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
+            <p className="scroll-hint">左右滑动查看更早记录与未来预测</p>
           </article>
 
           <article className="panel recent-panel">
@@ -290,6 +377,46 @@ export default async function Home() {
               )}
             </div>
           </article>
+        </section>
+
+        <section className="panel forecast-panel">
+          <div className="panel-heading">
+            <div>
+              <p className="eyebrow">基于当前目标的趋势推演</p>
+              <h2>预测体重</h2>
+            </div>
+            <span className="forecast-note">不含未登记的额外运动</span>
+          </div>
+
+          <div className="forecast-summary">
+            <div><span>当前体重</span><strong>{compact(metrics.currentWeightKg)} <small>kg</small></strong></div>
+            <div><span>基础代谢</span><strong>{Math.round(metrics.basalMetabolicRate)} <small>kcal/日</small></strong></div>
+            <div><span>基线消耗</span><strong>{Math.round(metrics.baselineBurnCalories)} <small>kcal/日</small></strong></div>
+            <div><span>预测热量缺口</span><strong className={forecastGap >= 0 ? "positive" : "negative"}>{forecastGap >= 0 ? "+" : ""}{Math.round(forecastGap)} <small>kcal/日</small></strong></div>
+          </div>
+
+          <div className="weight-chart-scroll" tabIndex={0} aria-label="未来三十天预测体重曲线">
+            <div className="weight-chart-wrap">
+              <svg className="weight-chart" viewBox="0 0 1000 170" role="img" aria-label="未来三十天预测体重曲线">
+                <line x1="0" y1="145" x2="1000" y2="145" className="weight-axis" />
+                <polyline points={weightPoints} className="weight-line" />
+                {forecast.filter((_, index) => index % 5 === 0 || index === forecast.length - 1).map((day) => {
+                  const index = forecast.indexOf(day);
+                  const x = (index / Math.max(1, forecast.length - 1)) * 1000;
+                  const y = 145 - ((day.predictedWeight - weightMin) / Math.max(0.1, weightMax - weightMin)) * 115;
+                  return <circle key={day.date} cx={x} cy={y} r="4" className="weight-dot" />;
+                })}
+              </svg>
+              <div className="weight-chart-labels">
+                <span>{shortDate(selectedDate)}</span>
+                <span>+15天</span>
+                <span>+30天</span>
+              </div>
+            </div>
+          </div>
+          <p className="forecast-footnote">
+            按每日目标 {Math.round(targets.calories)} kcal、基线消耗 {Math.round(metrics.baselineBurnCalories)} kcal 推算；30天后预计 {compact(forecastWeightEnd)} kg（{forecastWeightChange >= 0 ? "+" : ""}{compact(forecastWeightChange)} kg）。实际运动会让结果更偏向减重。
+          </p>
         </section>
 
         <footer>
