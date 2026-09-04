@@ -40,6 +40,8 @@ export type ForecastMetrics = {
   kcalPerKg: number;
 };
 
+export type WeightPoint = { date: string; time?: string; weightKg: number; bodyFatPercent?: number; source?: string };
+
 export type DashboardSource = "sheets" | "cache" | "none";
 
 export const defaultTargets: NutritionTargets = {
@@ -69,6 +71,7 @@ type SheetBridgePayload = {
   entries?: MealEntry[];
   targets?: Partial<NutritionTargets>;
   metrics?: Partial<ForecastMetrics>;
+  weights?: WeightPoint[];
 };
 
 function numeric(value: unknown) {
@@ -141,6 +144,9 @@ async function getSheetData() {
     entries,
     targets: { ...defaultTargets, ...(payload.targets ?? {}) },
     metrics: { ...defaultForecastMetrics, ...(payload.metrics ?? {}) },
+    weights: Array.isArray(payload.weights)
+      ? payload.weights.filter((point) => /^\d{4}-\d{2}-\d{2}$/.test(String(point.date)) && Number.isFinite(Number(point.weightKg))).map((point) => ({ ...point, date: String(point.date), weightKg: Number(point.weightKg) })).sort((a, b) => `${a.date} ${a.time ?? ""}`.localeCompare(`${b.date} ${b.time ?? ""}`))
+      : [],
   };
 }
 
@@ -159,6 +165,7 @@ async function getCachedData() {
     entries: entries as MealEntry[],
     targets: targets[0] ?? defaultTargets,
     metrics: defaultForecastMetrics,
+    weights: [],
   };
 }
 
@@ -175,6 +182,7 @@ export async function getDashboardData() {
         entries: [] as MealEntry[],
         targets: defaultTargets,
         metrics: defaultForecastMetrics,
+        weights: [],
         available: false,
         source: "none" as DashboardSource,
       };

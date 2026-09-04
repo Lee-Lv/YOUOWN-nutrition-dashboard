@@ -165,7 +165,7 @@ function MacroCard({
 }
 
 export default async function Home() {
-  const { entries, targets, metrics = defaultForecastMetrics, available, source } = await getDashboardData();
+  const { entries, targets, metrics = defaultForecastMetrics, weights = [], available, source } = await getDashboardData();
   const today = isoTodayInTokyo();
   const selectedDate = today;
   const selectedEntries = entries.filter((entry) => entry.entryDate === selectedDate);
@@ -193,16 +193,12 @@ export default async function Home() {
   );
   const targetLine = Math.min(100, (targets.calories / chartMax) * 100);
   const lastUpdated = entries[0]?.recordedAt ?? null;
-  const forecast = buildForecast(selectedDate, metrics, targets);
-  const forecastGap = forecast[0]?.dailyGap ?? metrics.baselineBurnCalories - targets.calories;
-  const forecastWeightEnd = forecast[forecast.length - 1]?.predictedWeight ?? metrics.currentWeightKg;
-  const forecastWeightChange = forecastWeightEnd - metrics.currentWeightKg;
-  const weightMin = Math.min(...forecast.map((day) => day.predictedWeight)) - 0.35;
-  const weightMax = Math.max(...forecast.map((day) => day.predictedWeight)) + 0.35;
-  const weightPoints = forecast
-    .map((day, index) => {
-      const x = (index / Math.max(1, forecast.length - 1)) * 1000;
-      const y = 145 - ((day.predictedWeight - weightMin) / Math.max(0.1, weightMax - weightMin)) * 115;
+  const weightMin = Math.min(...weights.map((point) => point.weightKg), metrics.currentWeightKg) - 0.35;
+  const weightMax = Math.max(...weights.map((point) => point.weightKg), metrics.currentWeightKg) + 0.35;
+  const weightPoints = weights
+    .map((point, index) => {
+      const x = (index / Math.max(1, weights.length - 1)) * 1000;
+      const y = 145 - ((point.weightKg - weightMin) / Math.max(0.1, weightMax - weightMin)) * 115;
       return `${x},${y}`;
     })
     .join(" ");
@@ -340,6 +336,16 @@ export default async function Home() {
           <article className="panel recent-panel">
             <DailyRecent dates={entries.map((entry) => entry.entryDate)} entries={entries} today={today} />
           </article>
+        </section>
+
+        <section className="panel historical-weight-panel">
+          <div className="panel-heading"><div><p className="eyebrow">真实称重记录</p><h2>历史体重</h2></div><span className="forecast-note">来自 Google Sheet / Apple Health</span></div>
+          {weights.length > 0 ? <div className="weight-chart-scroll" tabIndex={0} aria-label="横向滚动查看历史体重"><div className="weight-chart-wrap">
+            <svg className="weight-chart" viewBox="0 0 1000 170" role="img" aria-label="历史体重曲线"><line x1="0" y1="145" x2="1000" y2="145" className="weight-axis" /><polyline points={weightPoints} className="weight-line" />
+              {weights.map((point, index) => { const x = (index / Math.max(1, weights.length - 1)) * 1000; const y = 145 - ((point.weightKg - weightMin) / Math.max(0.1, weightMax - weightMin)) * 115; return <circle key={`${point.date}-${point.time ?? index}`} cx={x} cy={y} r="4" className="weight-dot" />; })}
+            </svg><div className="weight-chart-labels"><span>{shortDate(weights[0].date)}</span><span>{shortDate(weights[Math.floor((weights.length - 1) / 2)].date)}</span><span>{shortDate(weights[weights.length - 1].date)}</span></div>
+          </div></div> : <div className="empty-state"><strong>暂时没有历史体重数据</strong><span>请先让 Google Sheet 桥接接口返回“体重”页的历史记录。</span></div>}
+          <p className="forecast-footnote">共 {weights.length} 条真实体重记录；页面只展示实际同步数据，不用预测值填充历史。</p>
         </section>
 
         <footer>
