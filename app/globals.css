@@ -697,6 +697,31 @@ body {
   margin-top: 19px;
 }
 
+.day-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #839a91;
+  font-size: 0.78rem;
+}
+
+.day-controls button {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  color: #b9d8ca;
+  background: #12241e;
+  border: 1px solid rgba(115, 247, 180, 0.18);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.day-controls button:disabled {
+  cursor: default;
+  opacity: 0.35;
+}
+
 .meal-row {
   display: grid;
   grid-template-columns: 38px minmax(0, 1fr) auto;
