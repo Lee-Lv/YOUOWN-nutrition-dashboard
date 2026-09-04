@@ -12,6 +12,7 @@ import {
   getDashboardData,
   type ForecastMetrics,
   type MealEntry,
+  type WeightPoint,
 } from "../db/dashboard";
 import { CenteredTrend, DailyRecent } from "../components/dashboard-interactions";
 import { HistoricalWeightChart } from "../components/weight-chart";
@@ -88,6 +89,21 @@ function buildDateRange(start: string, end: string) {
   return Array.from({ length: Math.max(0, daysBetween(start, end) + 1) }, (_, index) =>
     addDays(start, index),
   );
+}
+
+function buildDailyWeights(weights: WeightPoint[]) {
+  const grouped = new Map<string, number[]>();
+  for (const point of weights) {
+    const values = grouped.get(point.date) ?? [];
+    values.push(point.weightKg);
+    grouped.set(point.date, values);
+  }
+  return [...grouped.entries()].map(([date, values]) => {
+    const sorted = [...values].sort((a, b) => a - b);
+    const middle = Math.floor(sorted.length / 2);
+    const weightKg = sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
+    return { date, weightKg, count: sorted.length };
+  }).sort((a, b) => a.date.localeCompare(b.date));
 }
 
 function buildDailyCalories(entries: MealEntry[]) {
@@ -194,15 +210,19 @@ export default async function Home() {
   );
   const targetLine = Math.min(100, (targets.calories / chartMax) * 100);
   const lastUpdated = entries[0]?.recordedAt ?? null;
-  const weightByDate = new Map<string, number>();
-  for (const point of weights) weightByDate.set(point.date, point.weightKg);
-  const latestWeight = weights[weights.length - 1]?.weightKg ?? metrics.currentWeightKg;
-  const weightDates = buildDateRange(addDays(today, -13), addDays(today, 14));
-  const weightPoints = weightDates.map((date, index, all) => {
+  const dailyWeights = buildDailyWeights(weights);
+  const weightByDate = new Map(dailyWeights.map((point) => [point.date, point.weightKg]));
+  const latestWeightPoint = dailyWeights[dailyWeights.length - 1];
+  const latestWeight = latestWeightPoint?.weightKg ?? metrics.currentWeightKg;
+  const firstWeightDate = dailyWeights[0]?.date ?? addDays(today, -13);
+  const weightDates = buildDateRange(firstWeightDate, addDays(today, 14));
+  const weightPoints = weightDates.map((date) => {
     const actual = weightByDate.get(date) ?? null;
-    const prior = all.slice(Math.max(0, index - 6), index + 1).map((d) => weightByDate.get(d)).filter((v): v is number => typeof v === "number");
-    const average = prior.length ? prior.reduce((a, b) => a + b, 0) / prior.length : null;
-    const forecast = date >= today ? latestWeight - (2900 - targets.calories) * daysBetween(today, date) / 7700 : null;
+    const prior = buildDateRange(addDays(date, -6), date).map((day) => weightByDate.get(day)).filter((v): v is number => typeof v === "number");
+    const average = prior.length >= 2 ? prior.reduce((a, b) => a + b, 0) / prior.length : null;
+    const forecast = latestWeightPoint && date >= latestWeightPoint.date
+      ? latestWeight - (2900 - targets.calories) * daysBetween(latestWeightPoint.date, date) / 7700
+      : null;
     return { date, weight: actual, average, forecast };
   });
   return (
@@ -342,7 +362,7 @@ export default async function Home() {
 
         <section className="panel historical-weight-panel">
           <div className="panel-heading"><div><p className="eyebrow">真实称重记录</p><h2>历史体重</h2></div><span className="forecast-note">来自 Google Sheet / Apple Health</span></div>
-          {weights.length > 0 ? <HistoricalWeightChart points={weightPoints} today={today} /> : <div className="empty-state"><strong>暂时没有历史体重数据</strong><span>请先让 Google Sheet 桥接接口返回“体重”页的历史记录。</span></div>}
+          {dailyWeights.length > 0 ? <HistoricalWeightChart points={weightPoints} today={today} /> : <div className="empty-state"><strong>暂时没有历史体重数据</strong><span>请先让 Google Sheet 桥接接口返回“体重”页的历史记录。</span></div>}
           <p className="forecast-footnote">按每日消耗 2900 kcal、摄入目标 {Math.round(targets.calories)} kcal 推算；实线为真实体重，细线为 7 天滑动平均，虚线为预测体重。</p>
         </section>
 

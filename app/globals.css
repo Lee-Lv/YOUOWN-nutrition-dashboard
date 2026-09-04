@@ -641,19 +641,35 @@ body {
 }
 
 .weight-chart-wrap {
-  width: max(1000px, 100%);
+  width: max-content;
   margin-top: 22px;
 }
 
 .weight-chart {
   display: block;
-  width: 100%;
-  height: 170px;
+  height: 230px;
   overflow: visible;
 }
 
-.weight-axis {
-  stroke: rgba(132, 167, 154, 0.18);
+.weight-grid {
+  stroke: rgba(132, 167, 154, 0.16);
+  stroke-width: 1;
+}
+
+.weight-axis-label,
+.weight-date {
+  fill: #657970;
+  font-size: 12px;
+}
+
+.weight-date.today {
+  fill: #73f7b4;
+  font-weight: 700;
+}
+
+.weight-today-line {
+  stroke: rgba(115, 247, 180, 0.42);
+  stroke-dasharray: 3 5;
   stroke-width: 1;
 }
 
@@ -671,12 +687,10 @@ body {
   stroke-width: 3;
 }
 
-.weight-chart-labels {
-  display: flex;
-  justify-content: space-between;
-  padding: 0 2px;
-  color: #657970;
-  font-size: 0.68rem;
+.weight-summary {
+  margin-top: 5px;
+  color: #839a91;
+  font-size: 0.78rem;
 }
 
 .forecast-footnote {
@@ -722,7 +736,7 @@ body {
   opacity: 0.35;
 }
 
-.weight-chart-wide { min-width: 1100px; }
+.weight-chart-wide { min-width: 0; }
 .weight-average-line { fill: none; stroke: #f6cf74; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
 .weight-forecast-line { fill: none; stroke: #8dbdff; stroke-width: 3; stroke-dasharray: 9 8; stroke-linecap: round; }
 .weight-chart-legend { display: flex; gap: 18px; margin-top: 8px; color: #839a91; font-size: 0.8rem; }
