@@ -722,6 +722,16 @@ body {
   opacity: 0.35;
 }
 
+.weight-chart-wide { min-width: 1100px; }
+.weight-average-line { fill: none; stroke: #f6cf74; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.weight-forecast-line { fill: none; stroke: #8dbdff; stroke-width: 3; stroke-dasharray: 9 8; stroke-linecap: round; }
+.weight-chart-legend { display: flex; gap: 18px; margin-top: 8px; color: #839a91; font-size: 0.8rem; }
+.weight-chart-legend span { display: inline-flex; align-items: center; gap: 7px; }
+.weight-chart-legend i { display: inline-block; width: 18px; height: 3px; border-radius: 3px; }
+.legend-real { background: #73f7b4; }
+.legend-average { background: #f6cf74; }
+.legend-forecast { background: #8dbdff; }
+
 .meal-row {
   display: grid;
   grid-template-columns: 38px minmax(0, 1fr) auto;
