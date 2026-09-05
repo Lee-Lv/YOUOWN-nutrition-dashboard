@@ -57,7 +57,7 @@ export function TargetGateMeter({
       {showLabels ? <div className="target-gate-scale" aria-hidden="true"><span>0%</span><span>100%</span>{isOver ? <span>120%</span> : null}</div> : null}
       <div className="target-gate-track">
         <span className="target-gate-normal" />
-        {isOver ? <><span className="target-gate-overflow" /><span className="target-gate-hatch" aria-hidden="true" /><span className="target-gate-marker" aria-hidden="true"><i />{showLabels ? <b>目标</b> : null}</span><span className="target-gate-core" aria-hidden="true" /></> : null}
+        {isOver ? <><span className="target-gate-overflow" /><span className="target-gate-hatch" aria-hidden="true" /><span className="target-gate-marker" aria-hidden="true"><i /></span><span className="target-gate-core" aria-hidden="true" /></> : null}
       </div>
       {isOver ? <div className="target-gate-caption">超额 +{overflowPercentage}%</div> : null}
     </div>

@@ -491,7 +491,6 @@ body {
 .target-gate-hatch { left: var(--gate-at); width: calc(100% - var(--gate-at)); opacity: 0.72; background: repeating-linear-gradient(135deg, rgba(255, 235, 190, 0.25) 0 2px, transparent 2px 6px); pointer-events: none; }
 .target-gate-marker { position: absolute; top: -4px; bottom: -4px; left: var(--gate-at); z-index: 3; width: 1px; background: rgba(240, 255, 248, 0.85); box-shadow: 0 0 7px rgba(222, 255, 238, 0.36); }
 .target-gate-marker i { position: absolute; top: -2px; left: -2px; width: 5px; height: 5px; border: 1px solid #dffff0; border-radius: 50%; background: #0d1a17; }
-.target-gate-marker b { position: absolute; top: -17px; left: 4px; color: #d8eee3; font-size: 0.54rem; font-weight: 700; white-space: nowrap; }
 .target-gate-core { position: absolute; top: 50%; left: calc(var(--gate-at) + var(--overflow-fill)); z-index: 4; width: 11px; height: 11px; border-radius: 50%; background: #fff0b6; box-shadow: 0 0 7px #fff0b6, 0 0 19px #ff8a4e, 0 0 34px rgba(255, 73, 62, 0.72); transform: translate(-100%, -50%); animation: target-core-pulse calc(1.55s - var(--overdrive) * 0.28s) ease-in-out infinite; }
 .state-over .target-gate-overflow { animation: target-overflow-breathe calc(2.2s - var(--overdrive) * 0.35s) ease-in-out infinite; }
 .target-gate-caption { margin-top: 6px; color: #ffb384; font-size: 0.67rem; font-weight: 720; }
