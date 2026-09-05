@@ -80,24 +80,24 @@ body {
 
 .ambient {
   position: fixed;
-  width: 34rem;
-  height: 34rem;
+  width: 38rem;
+  height: 38rem;
   border-radius: 999px;
-  opacity: 0.15;
-  filter: blur(88px);
+  opacity: 0.16;
+  filter: blur(76px);
   will-change: transform;
   pointer-events: none;
 }
 
 .ambient-one {
-  top: -12rem;
-  right: -9rem;
+  top: -9rem;
+  right: -6rem;
   background: #73f7b4;
 }
 
 .ambient-two {
-  bottom: -16rem;
-  left: -12rem;
+  bottom: -12rem;
+  left: -8rem;
   background: #3b82f6;
 }
 
@@ -311,6 +311,35 @@ body {
   margin-left: 34px;
 }
 
+.calorie-ring::before {
+  position: absolute;
+  inset: 8px;
+  border: 1px solid transparent;
+  border-top-color: rgba(115, 247, 180, 0.42);
+  border-right-color: rgba(115, 247, 180, 0.12);
+  border-radius: 50%;
+  content: "";
+  opacity: 0.7;
+  transform: rotate(-28deg);
+}
+
+.calorie-ring.state-approaching::before,
+.calorie-ring.state-critical::before,
+.calorie-ring.state-over::before {
+  animation: ring-orbit 7s linear infinite;
+}
+
+.calorie-ring.state-critical::before {
+  border-top-color: #ffce71;
+  box-shadow: 0 0 18px rgba(255, 206, 113, 0.2);
+}
+
+.calorie-ring.state-over::before {
+  border-top-color: #ff9d6e;
+  border-right-color: rgba(255, 127, 117, 0.45);
+  box-shadow: 0 0 22px rgba(255, 106, 94, 0.3);
+}
+
 .calorie-ring svg {
   width: 100%;
   height: 100%;
@@ -339,6 +368,16 @@ body {
   place-content: center;
   place-items: center;
   color: #73f7b4;
+}
+
+.calorie-ring.state-critical,
+.calorie-ring.state-over {
+  filter: drop-shadow(0 0 15px rgba(255, 173, 112, 0.18));
+}
+
+.calorie-card.state-over {
+  border-color: rgba(255, 127, 117, 0.36);
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.14), 0 0 44px rgba(255, 106, 94, 0.1);
 }
 
 .calorie-ring > div strong {
@@ -446,9 +485,45 @@ body {
   transform: translate(-50%, -50%);
 }
 
+.progress-particles {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.progress-particles i {
+  position: absolute;
+  bottom: 50%;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #ffd38d;
+  box-shadow: 0 0 8px rgba(255, 166, 94, 0.9);
+  opacity: 0;
+}
+
+.progress-particles i:nth-child(1) { left: calc(var(--progress, 0%) - 6px); }
+.progress-particles i:nth-child(2) { left: calc(var(--progress, 0%) - 15px); width: 2px; height: 2px; }
+.progress-particles i:nth-child(3) { left: calc(var(--progress, 0%) - 22px); width: 4px; height: 4px; }
+
+.state-critical .progress-particles i,
+.state-over .progress-particles i {
+  animation: ember-rise 1.7s ease-out infinite;
+}
+
+.state-critical .progress-particles i:nth-child(2),
+.state-over .progress-particles i:nth-child(2) { animation-delay: -0.55s; }
+.state-critical .progress-particles i:nth-child(3),
+.state-over .progress-particles i:nth-child(3) { animation-delay: -1.05s; }
+
 .state-approaching .progress-fill,
 .state-critical .progress-fill {
   box-shadow: 0 0 14px color-mix(in srgb, var(--tone) 55%, transparent), 0 0 28px color-mix(in srgb, var(--tone) 22%, transparent);
+}
+
+.state-approaching .progress-spark {
+  animation: spark-glide 2.6s ease-in-out infinite;
 }
 
 .state-critical .progress-spark,
@@ -466,6 +541,20 @@ body {
   margin-top: 8px;
 }
 
+.balance-metric.state-over {
+  position: relative;
+  border-radius: 12px;
+}
+
+.balance-metric.state-over::after {
+  position: absolute;
+  inset: -8px -10px;
+  border: 1px solid rgba(255, 127, 117, 0.18);
+  border-radius: 14px;
+  content: "";
+  pointer-events: none;
+}
+
 .progress-fill.fiber {
   background: #73f7b4;
 }
@@ -479,6 +568,12 @@ body {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
   margin-top: 14px;
+  scrollbar-width: none;
+  scrollbar-gutter: stable;
+}
+
+.macro-grid::-webkit-scrollbar {
+  display: none;
 }
 
 .macro-card {
@@ -606,6 +701,18 @@ body {
     radial-gradient(circle at 50% -20%, #142735 0, #071012 46%);
 }
 
+[data-visual-theme="instrument"] .dashboard-shell::before {
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(141, 189, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(141, 189, 255, 0.025) 1px, transparent 1px);
+  background-size: 72px 72px;
+  content: "";
+  opacity: 0.35;
+  pointer-events: none;
+}
+
 [data-visual-theme="instrument"] .ambient-one {
   background: #8dbdff;
   opacity: 0.13;
@@ -628,6 +735,13 @@ body {
   background:
     linear-gradient(118deg, rgba(141, 189, 255, 0.12), rgba(56, 217, 202, 0.025) 58%),
     #0b1a20;
+}
+
+[data-visual-theme="instrument"] .calorie-card,
+[data-visual-theme="instrument"] .balance-card,
+[data-visual-theme="instrument"] .macro-card,
+[data-visual-theme="instrument"] .panel {
+  border-radius: 18px;
 }
 
 [data-visual-theme="instrument"] .brand-mark,
@@ -691,6 +805,22 @@ body {
   50% { opacity: 1; transform: translate(-50%, -50%) scale(1.32); }
 }
 
+@keyframes spark-glide {
+  0%, 100% { opacity: 0.28; transform: translate(-50%, -50%) scale(0.72); }
+  50% { opacity: 0.95; transform: translate(-50%, -50%) scale(1.15); }
+}
+
+@keyframes ember-rise {
+  0% { opacity: 0; transform: translate(0, 3px) scale(0.6); }
+  25% { opacity: 1; }
+  100% { opacity: 0; transform: translate(4px, -13px) scale(1.05); }
+}
+
+@keyframes ring-orbit {
+  from { transform: rotate(-28deg); }
+  to { transform: rotate(332deg); }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .ambient-one {
     animation: ambient-drift-one 22s ease-in-out infinite alternate;
@@ -701,13 +831,13 @@ body {
   }
 
   @keyframes ambient-drift-one {
-    from { transform: translate3d(0, 0, 0) scale(1); }
-    to { transform: translate3d(-28px, 18px, 0) scale(1.08); }
+    from { opacity: 0.1; transform: translate3d(0, 0, 0) scale(0.96); }
+    to { opacity: 0.2; transform: translate3d(-72px, 34px, 0) scale(1.1); }
   }
 
   @keyframes ambient-drift-two {
-    from { transform: translate3d(0, 0, 0) scale(1); }
-    to { transform: translate3d(22px, -14px, 0) scale(1.06); }
+    from { opacity: 0.08; transform: translate3d(0, 0, 0) scale(0.98); }
+    to { opacity: 0.17; transform: translate3d(58px, -32px, 0) scale(1.1); }
   }
 }
 
@@ -1187,8 +1317,15 @@ footer {
   }
 
   .topbar {
+    flex-wrap: wrap;
+    gap: 12px;
     margin-bottom: 16px;
     padding: 0 4px;
+  }
+
+  .topbar-actions {
+    margin-left: auto;
+    gap: 8px;
   }
 
   .calorie-card {
@@ -1230,7 +1367,13 @@ footer {
   }
 
   .macro-grid {
+    grid-auto-columns: minmax(140px, 42vw);
+    grid-auto-flow: column;
+    grid-template-columns: none;
     gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 5px;
+    scrollbar-width: thin;
   }
 
   .macro-card {
@@ -1255,7 +1398,7 @@ footer {
 
   .macro-target {
     min-height: 22px;
-    font-size: 0.6rem;
+    font-size: 0.68rem;
   }
 
   .macro-card .progress-track {
@@ -1323,5 +1466,18 @@ footer {
     to {
       opacity: 1;
     }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ambient-one,
+  .ambient-two,
+  .calorie-ring::before,
+  .progress-spark,
+  .progress-particles i,
+  .ring-value,
+  .progress-fill,
+  .bar.active {
+    animation: none !important;
   }
 }

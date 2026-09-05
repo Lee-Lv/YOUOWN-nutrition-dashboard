@@ -1,7 +1,6 @@
 import type { CSSProperties } from "react";
 import {
   Activity,
-  Clock3,
   Droplets,
   Flame,
   Utensils,
@@ -10,7 +9,6 @@ import {
 import {
   defaultForecastMetrics,
   getDashboardData,
-  type ForecastMetrics,
   type MealEntry,
   type WeightPoint,
 } from "../db/dashboard";
@@ -115,23 +113,6 @@ function buildDailyCalories(entries: MealEntry[]) {
   return daily;
 }
 
-function buildForecast(
-  selectedDate: string,
-  metrics: ForecastMetrics,
-  targets: Totals,
-) {
-  const intake = targets.calories;
-  const dailyGap = metrics.baselineBurnCalories - intake;
-
-  return buildDateRange(selectedDate, addDays(selectedDate, 30)).map((date, index) => ({
-    date,
-    intake,
-    dailyGap,
-    predictedWeight:
-      metrics.currentWeightKg - (dailyGap * index) / metrics.kcalPerKg,
-  }));
-}
-
 function dateLabel(date: string) {
   return new Intl.DateTimeFormat("zh-CN", {
     timeZone: "UTC",
@@ -184,7 +165,10 @@ function SegmentedProgress({
     >
       <div className="progress-fill" />
       <span className="progress-separators" aria-hidden="true"><i /><i /><i /></span>
-      {state === "over" ? <span className="progress-spark" aria-hidden="true" /> : null}
+      {state !== "calm" ? <span className="progress-spark" aria-hidden="true" /> : null}
+      {state === "critical" || state === "over" ? (
+        <span className="progress-particles" aria-hidden="true"><i /><i /><i /></span>
+      ) : null}
     </div>
   );
 }
@@ -228,6 +212,7 @@ export default async function Home() {
   const totals = sumEntries(selectedEntries);
   const calorieProgress = percent(totals.calories, targets.calories);
   const remaining = targets.calories - totals.calories;
+  const calorieState = progressState(totals.calories, targets.calories);
   const circumference = 301.59;
   const dashOffset = circumference * (1 - calorieProgress / 100);
 
@@ -248,7 +233,6 @@ export default async function Home() {
     1,
   );
   const targetLine = Math.min(100, (targets.calories / chartMax) * 100);
-  const lastUpdated = entries[0]?.recordedAt ?? null;
   const dailyWeights = buildDailyWeights(weights);
   const weightByDate = new Map(dailyWeights.map((point) => [point.date, point.weightKg]));
   const latestWeightPoint = dailyWeights[dailyWeights.length - 1];
@@ -294,7 +278,7 @@ export default async function Home() {
         </header>
 
         <section className="focus-grid">
-          <article className="calorie-card">
+          <article className={`calorie-card state-${calorieState}`}>
             <div className="calorie-copy">
               <div className="eyebrow-row">
                 <p className="eyebrow">{selectedDate === today ? "今天" : "最近记录"}</p>
@@ -315,7 +299,7 @@ export default async function Home() {
               </div>
             </div>
 
-            <div className="calorie-ring" aria-label={`热量目标完成 ${Math.round(calorieProgress)}%`}>
+            <div className={`calorie-ring state-${calorieState}`} aria-label={`热量目标完成 ${Math.round(calorieProgress)}%`}>
               <svg viewBox="0 0 112 112" role="img">
                 <circle className="ring-track" cx="56" cy="56" r="48" />
                 <circle
@@ -327,7 +311,7 @@ export default async function Home() {
                   strokeDashoffset={dashOffset}
                 />
               </svg>
-              <div>
+              <div className="ring-content">
                 <Flame size={22} />
                 <strong>{Math.round(calorieProgress)}%</strong>
               </div>
@@ -340,12 +324,12 @@ export default async function Home() {
               <h2>纤维与盐分</h2>
             </div>
             <div className="balance-list">
-              <div>
+              <div className={`balance-metric state-${progressState(totals.fiber, targets.fiber)}`}>
                 <span><Wheat size={17} />膳食纤维</span>
                 <strong>{compact(totals.fiber)} <small>/ {compact(targets.fiber)} g</small></strong>
                 <SegmentedProgress label="膳食纤维" value={totals.fiber} target={targets.fiber} tone="#73f7b4" compactTrack />
               </div>
-              <div>
+              <div className={`balance-metric state-${progressState(totals.salt, targets.salt)}`}>
                 <span><Droplets size={17} />盐分</span>
                 <strong>{compact(totals.salt)} <small>/ {compact(targets.salt)} g</small></strong>
                 <SegmentedProgress label="盐分" value={totals.salt} target={targets.salt} tone="#8dbdff" compactTrack />

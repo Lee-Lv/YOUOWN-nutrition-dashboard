@@ -3,7 +3,6 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-type TimelineDay = { date: string; actualCalories: number | null; isForecast: boolean };
 type Meal = { id: number | string; meal: string; foodName: string; servingDescription: string; notes: string; confidence: string; calories: number };
 
 function shortDate(date: string) {

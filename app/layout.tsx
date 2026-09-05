@@ -23,6 +23,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-Hans">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var t=localStorage.getItem("nutrition-dashboard-theme");if(t==="instrument")document.documentElement.dataset.visualTheme="instrument"}catch(e){}`,
+          }}
+        />
+      </head>
       <body className="antialiased">{children}</body>
     </html>
   );

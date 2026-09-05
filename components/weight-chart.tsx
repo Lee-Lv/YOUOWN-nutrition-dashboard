@@ -48,8 +48,11 @@ export function HistoricalWeightChart({ points, today }: { points: Point[]; toda
 
   useEffect(() => {
     const defaultStart = todayIndex >= 0 ? Math.max(0, todayIndex - WINDOW_DAYS + 1) : maxStart;
-    setWindowStart(Math.min(maxStart, defaultStart));
-    setSelectedDate(null);
+    const frame = window.requestAnimationFrame(() => {
+      setWindowStart(Math.min(maxStart, defaultStart));
+      setSelectedDate(null);
+    });
+    return () => window.cancelAnimationFrame(frame);
   }, [today, todayIndex, maxStart]);
 
   const visible = useMemo(() => points.slice(windowStart, windowStart + WINDOW_DAYS), [points, windowStart]);
