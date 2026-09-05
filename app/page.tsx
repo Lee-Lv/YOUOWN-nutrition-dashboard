@@ -15,6 +15,8 @@ import {
 import { CenteredTrend, DailyRecent } from "../components/dashboard-interactions";
 import { HistoricalWeightChart } from "../components/weight-chart";
 import { CosmicBackground } from "../components/cosmic-background";
+import { TargetGateMeter } from "../components/target-gate-meter";
+import { TodayFocus, type FocusSignal } from "../components/today-focus";
 import { ThemeSwitcher } from "./theme-switcher";
 
 export const dynamic = "force-dynamic";
@@ -70,6 +72,15 @@ function isoTodayInTokyo() {
   }).formatToParts(new Date());
   const value = Object.fromEntries(parts.map((part) => [part.type, part.value]));
   return `${value.year}-${value.month}-${value.day}`;
+}
+
+function tokyoHour() {
+  const hour = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Tokyo",
+    hour: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(new Date()).find((part) => part.type === "hour")?.value;
+  return Number(hour ?? 0);
 }
 
 function addDays(date: string, amount: number) {
@@ -139,6 +150,107 @@ function progressState(value: number, target: number) {
   return "calm";
 }
 
+type NutritionKey = Exclude<keyof Totals, "calories">;
+
+const nutritionDefinitions: Record<NutritionKey, {
+  label: string;
+  tone: string;
+  kind: "hard-limit" | "budget" | "goal";
+  overAction: string;
+  nearAction: string;
+  deficitAction?: string;
+}> = {
+  protein: {
+    label: "蛋白质", tone: "#73f7b4", kind: "goal",
+    overAction: "下一餐不必额外补充蛋白质", nearAction: "保持当前蛋白质节奏", deficitAction: "下一餐优先补充优质蛋白质",
+  },
+  fat: {
+    label: "脂肪", tone: "#ffce71", kind: "budget",
+    overAction: "下一餐优先清淡蛋白与蔬菜", nearAction: "接下来留意烹调用油与酱料",
+  },
+  carbs: {
+    label: "碳水", tone: "#8dbdff", kind: "budget",
+    overAction: "下一餐减少主食与甜食", nearAction: "接下来留意主食份量",
+  },
+  fiber: {
+    label: "膳食纤维", tone: "#73f7b4", kind: "goal",
+    overAction: "纤维已足够，保持饮水", nearAction: "保持当前蔬菜与全谷物节奏", deficitAction: "下一餐补充蔬菜、水果或全谷物",
+  },
+  salt: {
+    label: "盐分", tone: "#ff9a72", kind: "hard-limit",
+    overAction: "晚餐减少汤汁、腌制品与加工食品", nearAction: "下一餐少汤少酱，留意隐形盐分",
+  },
+};
+
+function createFocusSignal(
+  key: NutritionKey,
+  value: number,
+  target: number,
+  channel: FocusSignal["channel"],
+): FocusSignal {
+  const definition = nutritionDefinitions[key];
+  const ratio = target > 0 ? value / target : 0;
+  const delta = value - target;
+  const action = channel === "deficit"
+    ? definition.deficitAction ?? definition.nearAction
+    : channel === "near"
+      ? definition.nearAction
+      : definition.overAction;
+  return {
+    key,
+    label: definition.label,
+    channel,
+    state: progressState(value, target),
+    value,
+    target,
+    unit: "g",
+    ratio,
+    delta,
+    action,
+    tone: definition.tone,
+  };
+}
+
+function buildFocusSignals(totals: Totals, targets: Totals, hour: number, hasEntries: boolean): FocusSignal[] {
+  if (!hasEntries) {
+    return [{
+      key: "empty", label: "还没有饮食记录", channel: "empty", state: "calm", value: 0, target: 0,
+      unit: "", ratio: 0, delta: 0, tone: "#73f7b4", action: "记录第一餐后，这里会给出今天最值得关注的一件事。",
+    }];
+  }
+
+  const ranked: Array<{ signal: FocusSignal; rank: number }> = [];
+  (Object.keys(nutritionDefinitions) as NutritionKey[]).forEach((key) => {
+    const value = totals[key];
+    const target = targets[key];
+    const ratio = target > 0 ? value / target : 0;
+    const { kind } = nutritionDefinitions[key];
+    if (key === "salt" && ratio > 1) {
+      ranked.push({ signal: createFocusSignal(key, value, target, "danger"), rank: 4000 + (ratio - 1) * 100 });
+    } else if ((key === "fat" || key === "carbs") && ratio > 1) {
+      ranked.push({ signal: createFocusSignal(key, value, target, "over"), rank: 3000 + (ratio - 1) * 100 });
+    } else if (key === "protein" && ratio > 1.2) {
+      ranked.push({ signal: createFocusSignal(key, value, target, "over"), rank: 2500 + (ratio - 1.2) * 100 });
+    } else if ((key === "salt" || key === "fat" || key === "carbs") && ratio >= 0.85) {
+      ranked.push({ signal: createFocusSignal(key, value, target, "near"), rank: 2000 + ratio * 100 });
+    } else if (kind === "goal") {
+      const expected = hour < 14 ? 0 : hour < 18 ? 0.5 : hour < 21 ? 0.75 : 0.9;
+      if (expected > 0 && ratio < expected) {
+        ranked.push({ signal: createFocusSignal(key, value, target, "deficit"), rank: 1000 + (expected - ratio) * 100 });
+      }
+    }
+  });
+
+  if (!ranked.length) {
+    return [{
+      key: "steady", label: "今日饮食", channel: "calm", state: "calm", value: 0, target: 0,
+      unit: "", ratio: 0, delta: 0, tone: "#73f7b4", action: "当前各项都在合理范围内，按计划完成后续饮食即可。",
+    }];
+  }
+
+  return ranked.sort((a, b) => b.rank - a.rank).slice(0, 2).map(({ signal }) => signal);
+}
+
 function SegmentedProgress({
   label,
   value,
@@ -152,30 +264,7 @@ function SegmentedProgress({
   tone: string;
   compactTrack?: boolean;
 }) {
-  const progress = percent(value, target);
-  const state = progressState(value, target);
-  const overdrive = target > 0 ? Math.min(1, Math.max(0, (value - target) / (target * 0.2))) : 0;
-  return (
-    <div
-      className={`progress-track segmented-track ${compactTrack ? "compact-track" : ""} state-${state}`}
-      style={{ "--tone": tone, "--progress": `${progress}%`, "--overdrive": overdrive } as CSSProperties}
-      role="progressbar"
-      aria-label={`${label}完成 ${Math.round((target ? value / target : 0) * 100)}%`}
-      aria-valuemin={0}
-      aria-valuemax={target}
-      aria-valuenow={value}
-    >
-      <div className="progress-fill" />
-      <span className="progress-separators" aria-hidden="true"><i /><i /><i /></span>
-      {state !== "calm" ? <span className="progress-spark" aria-hidden="true" /> : null}
-      {state === "critical" || state === "over" ? (
-        <span className="progress-particles" aria-hidden="true">
-          <i /><i /><i /><i /><i /><i /><i /><i />
-        </span>
-      ) : null}
-      {state === "over" ? <span className="progress-shockwave" aria-hidden="true" /> : null}
-    </div>
-  );
+  return <TargetGateMeter label={label} value={value} target={target} tone={tone} compact={compactTrack} />;
 }
 
 function MacroCard({
@@ -195,6 +284,7 @@ function MacroCard({
 }) {
   const state = progressState(value, target);
   const overdrive = target > 0 ? Math.min(1, Math.max(0, (value - target) / (target * 0.2))) : 0;
+  const excess = Math.max(0, value - target);
   return (
     <article className={`macro-card state-${state}`} style={{ "--tone": tone, "--overdrive": overdrive } as CSSProperties}>
       <div className="macro-heading">
@@ -205,6 +295,7 @@ function MacroCard({
         {compact(value)} <span>{unit}</span>
       </div>
       <div className="macro-target">目标 {compact(target)} {unit}</div>
+      {state === "over" ? <div className="macro-excess">超 {compact(excess)} {unit} · {Math.round((value / target) * 100)}%</div> : null}
       <SegmentedProgress label={label} value={value} target={target} tone={tone} />
     </article>
   );
@@ -243,16 +334,7 @@ export default async function Home() {
   const weightByDate = new Map(dailyWeights.map((point) => [point.date, point.weightKg]));
   const latestWeightPoint = dailyWeights[dailyWeights.length - 1];
   const latestWeight = latestWeightPoint?.weightKg ?? metrics.currentWeightKg;
-  const statusMetrics = [
-    { label: "蛋白质", value: totals.protein, target: targets.protein },
-    { label: "脂肪", value: totals.fat, target: targets.fat },
-    { label: "碳水", value: totals.carbs, target: targets.carbs },
-    { label: "膳食纤维", value: totals.fiber, target: targets.fiber },
-    { label: "盐分", value: totals.salt, target: targets.salt },
-  ];
-  const overItems = statusMetrics.filter((item) => item.value > item.target);
-  const nearItems = statusMetrics.filter((item) => item.value >= item.target * 0.85 && item.value <= item.target);
-  const statusItems = overItems.length ? overItems : nearItems;
+  const focusSignals = buildFocusSignals(totals, targets, tokyoHour(), selectedEntries.length > 0);
   const firstWeightDate = dailyWeights[0]?.date ?? addDays(today, -13);
   const weightDates = buildDateRange(firstWeightDate, addDays(today, 14));
   const weightPoints = weightDates.map((date) => {
@@ -323,24 +405,7 @@ export default async function Home() {
             </div>
           </article>
 
-          <article className="balance-card">
-            <div>
-              <p className="eyebrow">今日补充项</p>
-              <h2>纤维与盐分</h2>
-            </div>
-            <div className="balance-list">
-              <div className={`balance-metric state-${progressState(totals.fiber, targets.fiber)}`}>
-                <span><Wheat size={17} />膳食纤维</span>
-                <strong>{compact(totals.fiber)} <small>/ {compact(targets.fiber)} g</small></strong>
-                <SegmentedProgress label="膳食纤维" value={totals.fiber} target={targets.fiber} tone="#73f7b4" compactTrack />
-              </div>
-              <div className={`balance-metric state-${progressState(totals.salt, targets.salt)}`}>
-                <span><Droplets size={17} />盐分</span>
-                <strong>{compact(totals.salt)} <small>/ {compact(targets.salt)} g</small></strong>
-                <SegmentedProgress label="盐分" value={totals.salt} target={targets.salt} tone="#8dbdff" compactTrack />
-              </div>
-            </div>
-          </article>
+          <TodayFocus signals={focusSignals} />
         </section>
 
         <section className="macro-grid" aria-label="三大营养素">
@@ -348,17 +413,6 @@ export default async function Home() {
           <MacroCard label="脂肪" value={totals.fat} target={targets.fat} unit="g" icon={<Droplets size={18} />} tone="#ffce71" />
           <MacroCard label="碳水" value={totals.carbs} target={targets.carbs} unit="g" icon={<Wheat size={18} />} tone="#8dbdff" />
         </section>
-
-        {statusItems.length > 0 ? (
-          <section className={`status-ribbon ${overItems.length ? "is-over" : "is-near"}`} aria-live="polite">
-            <span className="status-ribbon-orb" aria-hidden="true" />
-            <div>
-              <strong>{overItems.length ? "今天有项目超过目标" : "接近今日目标"}</strong>
-              <span>{statusItems.map((item) => item.label).join("、")}{overItems.length ? "，晚餐建议清淡一些" : "，接下来留意份量"}</span>
-            </div>
-            <span className="status-ribbon-mark">{overItems.length ? "注意" : "留意"}</span>
-          </section>
-        ) : null}
 
         <section className="lower-grid">
           <article className="panel trend-panel">

@@ -118,35 +118,38 @@ export function CosmicBackground() {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+    // Keep a non-null local reference for callbacks created below.
+    const activeCanvas = canvas;
 
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const gl = canvas.getContext("webgl", { alpha: false, antialias: false });
+    const gl = activeCanvas.getContext("webgl", { alpha: false, antialias: false });
     if (!gl) return;
+    const activeGl = gl;
 
-    const vertexShader = compileShader(gl, gl.VERTEX_SHADER, vertexSource);
-    const fragmentShader = compileShader(gl, gl.FRAGMENT_SHADER, fragmentSource);
+    const vertexShader = compileShader(activeGl, activeGl.VERTEX_SHADER, vertexSource);
+    const fragmentShader = compileShader(activeGl, activeGl.FRAGMENT_SHADER, fragmentSource);
     if (!vertexShader || !fragmentShader) return;
-    const program = gl.createProgram();
+    const program = activeGl.createProgram();
     if (!program) return;
-    gl.attachShader(program, vertexShader);
-    gl.attachShader(program, fragmentShader);
-    gl.linkProgram(program);
-    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) return;
-    gl.useProgram(program);
+    activeGl.attachShader(program, vertexShader);
+    activeGl.attachShader(program, fragmentShader);
+    activeGl.linkProgram(program);
+    if (!activeGl.getProgramParameter(program, activeGl.LINK_STATUS)) return;
+    activeGl.useProgram(program);
 
-    const position = gl.createBuffer();
+    const position = activeGl.createBuffer();
     if (!position) return;
-    gl.bindBuffer(gl.ARRAY_BUFFER, position);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
-    const location = gl.getAttribLocation(program, "aPosition");
-    gl.enableVertexAttribArray(location);
-    gl.vertexAttribPointer(location, 2, gl.FLOAT, false, 0, 0);
+    activeGl.bindBuffer(activeGl.ARRAY_BUFFER, position);
+    activeGl.bufferData(activeGl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), activeGl.STATIC_DRAW);
+    const location = activeGl.getAttribLocation(program, "aPosition");
+    activeGl.enableVertexAttribArray(location);
+    activeGl.vertexAttribPointer(location, 2, activeGl.FLOAT, false, 0, 0);
 
-    const timeLocation = gl.getUniformLocation(program, "uTime");
-    const resolutionLocation = gl.getUniformLocation(program, "uResolution");
-    const pointerLocation = gl.getUniformLocation(program, "uPointer");
-    const themeLocation = gl.getUniformLocation(program, "uTheme");
-    const qualityLocation = gl.getUniformLocation(program, "uQuality");
+    const timeLocation = activeGl.getUniformLocation(program, "uTime");
+    const resolutionLocation = activeGl.getUniformLocation(program, "uResolution");
+    const pointerLocation = activeGl.getUniformLocation(program, "uPointer");
+    const themeLocation = activeGl.getUniformLocation(program, "uTheme");
+    const qualityLocation = activeGl.getUniformLocation(program, "uQuality");
     const pointer = { x: 0.5, y: 0.5, targetX: 0.5, targetY: 0.5 };
     const startedAt = performance.now();
     let frame = 0;
@@ -162,10 +165,10 @@ export function CosmicBackground() {
       const scale = quality();
       width = Math.max(1, Math.floor(window.innerWidth * scale));
       height = Math.max(1, Math.floor(window.innerHeight * scale));
-      if (canvas.width !== width || canvas.height !== height) {
-        canvas.width = width;
-        canvas.height = height;
-        gl.viewport(0, 0, width, height);
+      if (activeCanvas.width !== width || activeCanvas.height !== height) {
+        activeCanvas.width = width;
+        activeCanvas.height = height;
+        activeGl.viewport(0, 0, width, height);
       }
     }
 
@@ -174,12 +177,12 @@ export function CosmicBackground() {
       pointer.x += (pointer.targetX - pointer.x) * 0.035;
       pointer.y += (pointer.targetY - pointer.y) * 0.035;
       const theme = document.documentElement.dataset.visualTheme === "instrument" ? 1 : 0;
-      gl.uniform1f(timeLocation, reduceMotion.matches ? 5 : (now - startedAt) / 1000);
-      gl.uniform2f(resolutionLocation, width, height);
-      gl.uniform2f(pointerLocation, pointer.x, pointer.y);
-      gl.uniform1f(themeLocation, theme);
-      gl.uniform1f(qualityLocation, quality());
-      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      activeGl.uniform1f(timeLocation, reduceMotion.matches ? 5 : (now - startedAt) / 1000);
+      activeGl.uniform2f(resolutionLocation, width, height);
+      activeGl.uniform2f(pointerLocation, pointer.x, pointer.y);
+      activeGl.uniform1f(themeLocation, theme);
+      activeGl.uniform1f(qualityLocation, quality());
+      activeGl.drawArrays(activeGl.TRIANGLES, 0, 3);
       if (!reduceMotion.matches) frame = window.requestAnimationFrame(render);
       lastFrame = now;
     }
@@ -201,10 +204,10 @@ export function CosmicBackground() {
       observer.disconnect();
       window.removeEventListener("resize", resize);
       window.removeEventListener("pointermove", onPointerMove);
-      gl.deleteBuffer(position);
-      gl.deleteProgram(program);
-      gl.deleteShader(vertexShader);
-      gl.deleteShader(fragmentShader);
+      activeGl.deleteBuffer(position);
+      activeGl.deleteProgram(program);
+      activeGl.deleteShader(vertexShader);
+      activeGl.deleteShader(fragmentShader);
     };
   }, []);
 

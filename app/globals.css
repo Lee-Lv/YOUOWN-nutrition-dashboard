@@ -435,6 +435,53 @@ body {
   font-weight: 550;
 }
 
+/* One shared scale for every nutrition meter: 0–100 is the plan, 100–120 is visible overflow. */
+.today-focus-card { position: relative; display: flex; min-height: 262px; flex-direction: column; padding: 25px 27px 22px; overflow: hidden; border: 1px solid rgba(130, 171, 156, 0.16); border-radius: 26px; background: radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--focus-tone, #73f7b4) 10%, transparent), transparent 43%), rgba(13, 25, 23, 0.86); box-shadow: 0 22px 60px rgba(0, 0, 0, 0.14); }
+.today-focus-card.channel-danger, .today-focus-card.channel-over { border-color: rgba(255, 137, 103, 0.48); background: radial-gradient(circle at 92% 5%, rgba(255, 105, 79, 0.13), transparent 42%), linear-gradient(135deg, rgba(65, 31, 27, 0.38), rgba(13, 25, 23, 0.91) 56%); box-shadow: 0 22px 60px rgba(0, 0, 0, 0.14), 0 0 32px rgba(255, 99, 76, 0.08); }
+.today-focus-card.channel-near { border-color: rgba(255, 206, 113, 0.34); }
+.today-focus-card.channel-deficit { border-color: rgba(115, 247, 180, 0.3); }
+.focus-card-header, .focus-primary, .focus-secondary, .focus-action, .target-gate-meter { position: relative; z-index: 1; }
+.focus-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.today-focus-card h2 { margin: 6px 0 0; color: #effcf5; font-size: 1.28rem; font-weight: 680; letter-spacing: -0.025em; }
+.focus-count { display: inline-flex; align-items: center; gap: 5px; margin-top: 1px; color: #ffc18e; font-size: 0.66rem; font-weight: 700; white-space: nowrap; }
+.focus-primary { display: grid; grid-template-columns: 43px minmax(0, 1fr); gap: 11px; margin-top: 16px; }
+.focus-icon { display: grid; width: 43px; height: 43px; place-items: center; border: 1px solid color-mix(in srgb, var(--focus-tone) 38%, transparent); border-radius: 14px; background: color-mix(in srgb, var(--focus-tone) 12%, transparent); color: var(--focus-tone); }
+.focus-copy { min-width: 0; }
+.focus-label { display: block; color: #a5bab1; font-size: 0.72rem; font-weight: 650; }
+.focus-copy strong { display: block; margin-top: 2px; color: #f3fff7; font-size: 1.15rem; letter-spacing: -0.025em; }
+.focus-copy p { margin: 4px 0 0; color: #8ea49b; font-size: 0.72rem; }
+.focus-copy p b { color: #d8eee3; font-weight: 700; }
+
+.target-gate-meter { --gate-at: 83.333%; margin-top: 13px; }
+.target-gate-scale { display: grid; grid-template-columns: 1fr auto auto; margin: 0 1px 5px; color: #658078; font-size: 0.57rem; font-weight: 700; }
+.target-gate-scale span:nth-child(2) { margin-right: 5px; color: #a3bdb2; }
+.target-gate-track { position: relative; height: 13px; overflow: visible; border: 1px solid rgba(155, 189, 175, 0.1); border-radius: 999px; background: linear-gradient(90deg, rgba(255, 255, 255, 0.055) 0 var(--gate-at), rgba(255, 115, 83, 0.10) var(--gate-at) 100%); }
+.target-gate-normal, .target-gate-overflow, .target-gate-hatch { position: absolute; top: 2px; bottom: 2px; border-radius: 999px; }
+.target-gate-normal { left: 2px; width: max(0px, calc(var(--normal-fill) - 4px)); background: linear-gradient(90deg, var(--tone), color-mix(in srgb, var(--tone) 72%, white)); box-shadow: 0 0 10px color-mix(in srgb, var(--tone) 32%, transparent); }
+.target-gate-overflow { left: var(--gate-at); width: var(--overflow-fill); min-width: 0; background: linear-gradient(90deg, #ffbd70, #ff725a 58%, #ffbd70); box-shadow: 0 0 12px rgba(255, 103, 76, calc(0.18 + var(--overdrive) * 0.34)); }
+.target-gate-hatch { left: var(--gate-at); width: calc(100% - var(--gate-at)); opacity: 0.72; background: repeating-linear-gradient(135deg, rgba(255, 235, 190, 0.25) 0 2px, transparent 2px 6px); pointer-events: none; }
+.target-gate-marker { position: absolute; top: -4px; bottom: -4px; left: var(--gate-at); z-index: 3; width: 1px; background: rgba(240, 255, 248, 0.85); box-shadow: 0 0 7px rgba(222, 255, 238, 0.36); }
+.target-gate-marker i { position: absolute; top: -2px; left: -2px; width: 5px; height: 5px; border: 1px solid #dffff0; border-radius: 50%; background: #0d1a17; }
+.target-gate-marker b { position: absolute; top: -17px; left: 4px; color: #d8eee3; font-size: 0.54rem; font-weight: 700; white-space: nowrap; }
+.target-gate-core { position: absolute; top: 50%; left: calc(var(--gate-at) + var(--overflow-fill)); z-index: 4; width: 11px; height: 11px; border-radius: 50%; background: #fff0b6; box-shadow: 0 0 7px #fff0b6, 0 0 19px #ff8a4e, 0 0 34px rgba(255, 73, 62, 0.72); transform: translate(-100%, -50%); animation: target-core-pulse calc(1.55s - var(--overdrive) * 0.28s) ease-in-out infinite; }
+.state-over .target-gate-overflow { animation: target-overflow-breathe calc(2.2s - var(--overdrive) * 0.35s) ease-in-out infinite; }
+.target-gate-caption { margin-top: 6px; color: #ffb384; font-size: 0.67rem; font-weight: 720; }
+.target-gate-meter.is-compact { margin-top: 11px; }
+.target-gate-meter.is-compact .target-gate-track { height: 8px; }
+.target-gate-meter.is-compact .target-gate-normal, .target-gate-meter.is-compact .target-gate-overflow, .target-gate-meter.is-compact .target-gate-hatch { top: 1px; bottom: 1px; }
+.target-gate-meter.is-compact .target-gate-marker { top: -3px; bottom: -3px; }
+.target-gate-meter.is-compact .target-gate-core { width: 8px; height: 8px; }
+.target-gate-meter.is-compact .target-gate-caption { margin-top: 5px; font-size: 0.62rem; }
+.focus-secondary { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 8px; width: 100%; margin-top: auto; padding: 8px 0 0; border: 0; border-top: 1px solid rgba(155, 189, 175, 0.12); background: transparent; color: #90a89e; font: inherit; text-align: left; cursor: pointer; }
+.focus-secondary span, .focus-secondary small { color: #809a8f; font-size: 0.66rem; }
+.focus-secondary strong { color: #cce0d7; font-size: 0.72rem; font-weight: 650; }
+.focus-secondary small { min-width: 33px; color: #ffc18e; font-weight: 700; text-align: right; }
+.focus-secondary:hover strong, .focus-secondary:focus-visible strong { color: #ffffff; }
+.focus-action { display: flex; align-items: center; gap: 6px; margin: 10px 0 0; color: #b4c8be; font-size: 0.68rem; line-height: 1.45; }
+.focus-action svg { flex: 0 0 auto; color: var(--focus-tone); }
+@keyframes target-core-pulse { 50% { transform: translate(-100%, -50%) scale(1.38); filter: saturate(1.28); } }
+@keyframes target-overflow-breathe { 50% { filter: brightness(1.25) saturate(1.2); } }
+
 .progress-track {
   position: relative;
   height: 6px;
@@ -716,8 +763,11 @@ body {
   font-size: 0.72rem;
 }
 
-.macro-card .progress-track {
-  margin-top: 18px;
+.macro-excess {
+  margin-top: 3px;
+  color: #ffb384;
+  font-size: 0.67rem;
+  font-weight: 720;
 }
 
 .status-ribbon {
@@ -814,6 +864,7 @@ body {
 [data-visual-theme="instrument"] .calorie-card,
 [data-visual-theme="instrument"] .balance-card,
 [data-visual-theme="instrument"] .macro-card,
+[data-visual-theme="instrument"] .today-focus-card,
 [data-visual-theme="instrument"] .panel {
   border-color: rgba(141, 189, 255, 0.16);
   background: linear-gradient(145deg, rgba(19, 35, 45, 0.84), rgba(9, 20, 24, 0.78));
@@ -1409,7 +1460,8 @@ footer {
     grid-template-columns: 1fr;
   }
 
-  .balance-card {
+  .balance-card,
+  .today-focus-card {
     min-height: auto;
     gap: 26px;
     overflow: visible;
@@ -1480,13 +1532,32 @@ footer {
   }
 
   .balance-card,
+  .today-focus-card,
   .panel {
     padding: 22px 19px;
     border-radius: 22px;
   }
 
-  .balance-card {
+  .balance-card,
+  .today-focus-card {
     overflow: visible;
+  }
+
+  .today-focus-card {
+    min-height: 240px;
+    padding: 21px 18px 18px;
+  }
+
+  .focus-primary {
+    margin-top: 13px;
+  }
+
+  .focus-copy strong {
+    font-size: 1.05rem;
+  }
+
+  .target-gate-scale {
+    font-size: 0.53rem;
   }
 
   .macro-grid {
@@ -1525,8 +1596,13 @@ footer {
     font-size: 0.68rem;
   }
 
-  .macro-card .progress-track {
-    margin-top: 11px;
+  .macro-card .target-gate-meter {
+    margin-top: 10px;
+  }
+
+  .macro-excess {
+    min-height: 17px;
+    font-size: 0.59rem;
   }
 
   .chart {
@@ -1599,6 +1675,8 @@ footer {
   .progress-spark,
   .progress-shockwave,
   .progress-particles i,
+  .target-gate-core,
+  .target-gate-overflow,
   .macro-card.state-over::before,
   .macro-card.state-over::after,
   .ring-value,
