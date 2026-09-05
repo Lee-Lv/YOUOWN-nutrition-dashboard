@@ -640,16 +640,15 @@ body {
   color: #ffce71;
 }
 
-.weight-chart-wrap {
-  width: max-content;
-  margin-top: 22px;
-}
-
-.weight-chart {
-  display: block;
-  height: 230px;
-  overflow: visible;
-}
+.weight-chart-interactive { margin-top: 18px; }
+.weight-chart-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 10px; }
+.weight-window-title { color: #d8f5e6; font-size: 0.9rem; font-weight: 700; }
+.weight-window-hint { margin-top: 4px; color: #6f887e; font-size: 0.72rem; }
+.weight-window-controls { display: flex; align-items: center; gap: 9px; color: #8fa69c; font-size: 0.75rem; white-space: nowrap; }
+.weight-window-controls button { display: grid; width: 30px; height: 30px; place-items: center; color: #c4e5d5; background: #12241e; border: 1px solid rgba(115, 247, 180, 0.2); border-radius: 999px; cursor: pointer; font-size: 1.25rem; line-height: 1; }
+.weight-window-controls button:disabled { cursor: default; opacity: 0.3; }
+.weight-chart-frame { width: 100%; overflow: hidden; touch-action: pan-y; user-select: none; }
+.weight-chart { display: block; width: 100%; height: auto; overflow: visible; }
 
 .weight-grid {
   stroke: rgba(132, 167, 154, 0.16);
@@ -685,6 +684,20 @@ body {
   fill: #07100f;
   stroke: #8dbdff;
   stroke-width: 3;
+  cursor: pointer;
+}
+
+.weight-dot.is-selected {
+  fill: #73f7b4;
+  stroke: #f2fff8;
+}
+
+.weight-selected-value {
+  min-height: 20px;
+  margin-top: 4px;
+  color: #d8f5e6;
+  font-size: 0.8rem;
+  font-weight: 650;
 }
 
 .weight-summary {
