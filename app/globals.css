@@ -542,14 +542,33 @@ body {
   top: 50%;
   left: var(--progress, 100%);
   z-index: 4;
-  width: 20px;
-  height: 20px;
-  border: 2px solid rgba(255, 194, 122, 1);
+  width: 24px;
+  height: 24px;
+  border: 3px solid #ff5a3d;
   border-radius: 50%;
-  box-shadow: 0 0 20px rgba(255, 112, 91, 1), 0 0 44px rgba(255, 66, 62, 0.7);
+  background: radial-gradient(circle, #fff0b0 0 13%, #ff9a45 30%, rgba(255, 77, 52, 0.48) 48%, transparent 70%);
+  box-shadow: 0 0 10px #fff0b0, 0 0 24px #ff7a3d, 0 0 52px rgba(255, 54, 38, 0.95), 0 0 86px rgba(255, 40, 32, 0.55);
   pointer-events: none;
   transform: translate(-50%, -50%);
-  animation: overload-pulse 1.8s ease-out infinite;
+  animation: overload-pulse 1.15s ease-out infinite;
+  filter: saturate(1.45) brightness(1.2);
+}
+
+.progress-shockwave::before,
+.progress-shockwave::after {
+  position: absolute;
+  inset: -3px;
+  border: 2px solid rgba(255, 84, 51, 0.92);
+  border-radius: inherit;
+  content: "";
+  pointer-events: none;
+  animation: overload-ring 1.15s ease-out infinite;
+}
+
+.progress-shockwave::after {
+  inset: -8px;
+  border-color: rgba(255, 142, 67, 0.62);
+  animation-delay: -0.38s;
 }
 
 .state-approaching .progress-fill,
@@ -885,8 +904,13 @@ body {
 }
 
 @keyframes overload-pulse {
-  0% { opacity: 1; transform: translate(-50%, -50%) scale(0.4); }
-  70%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(5.2); }
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(0.38); }
+  55%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(4.8); }
+}
+
+@keyframes overload-ring {
+  0% { opacity: 1; transform: scale(0.35); }
+  70%, 100% { opacity: 0; transform: scale(3.7); }
 }
 
 @keyframes overload-frame {
