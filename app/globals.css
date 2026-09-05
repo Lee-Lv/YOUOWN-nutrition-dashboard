@@ -80,11 +80,12 @@ body {
 
 .ambient {
   position: fixed;
-  width: 28rem;
-  height: 28rem;
+  width: 34rem;
+  height: 34rem;
   border-radius: 999px;
-  opacity: 0.11;
-  filter: blur(100px);
+  opacity: 0.15;
+  filter: blur(88px);
+  will-change: transform;
   pointer-events: none;
 }
 
@@ -607,12 +608,12 @@ body {
 
 [data-visual-theme="instrument"] .ambient-one {
   background: #8dbdff;
-  opacity: 0.08;
+  opacity: 0.13;
 }
 
 [data-visual-theme="instrument"] .ambient-two {
   background: #38d9ca;
-  opacity: 0.08;
+  opacity: 0.11;
 }
 
 [data-visual-theme="instrument"] .calorie-card,
