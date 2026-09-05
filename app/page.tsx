@@ -6,14 +6,8 @@ import {
   Utensils,
   Wheat,
 } from "lucide-react";
-import {
-  defaultForecastMetrics,
-  getDashboardData,
-  type MealEntry,
-  type WeightPoint,
-} from "../db/dashboard";
+import { getDashboardData, type MealEntry } from "../db/dashboard";
 import { CenteredTrend, DailyRecent } from "../components/dashboard-interactions";
-import { HistoricalWeightChart } from "../components/weight-chart";
 import { CosmicBackground } from "../components/cosmic-background";
 import { TargetGateMeter } from "../components/target-gate-meter";
 import { TodayFocus, type FocusSignal } from "../components/today-focus";
@@ -95,42 +89,6 @@ function buildDateRange(start: string, end: string) {
   return Array.from({ length: Math.max(0, daysBetween(start, end) + 1) }, (_, index) =>
     addDays(start, index),
   );
-}
-
-function buildDailyWeights(weights: WeightPoint[]) {
-  const grouped = new Map<string, number[]>();
-  for (const point of weights) {
-    const values = grouped.get(point.date) ?? [];
-    values.push(point.weightKg);
-    grouped.set(point.date, values);
-  }
-  return [...grouped.entries()].map(([date, values]) => {
-    const sorted = [...values].sort((a, b) => a - b);
-    const middle = Math.floor(sorted.length / 2);
-    const weightKg = sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
-    return { date, weightKg, count: sorted.length };
-  }).sort((a, b) => a.date.localeCompare(b.date));
-}
-
-function interpolateWeightByDate(points: Array<{ date: string; weightKg: number }>, dates: string[]) {
-  const actual = new Map(points.map((point) => [point.date, point.weightKg]));
-  const interpolated = new Map<string, number>();
-  let nextIndex = 0;
-  for (const date of dates) {
-    const exact = actual.get(date);
-    if (typeof exact === "number") {
-      interpolated.set(date, exact);
-      continue;
-    }
-    while (nextIndex < points.length && points[nextIndex].date < date) nextIndex += 1;
-    const before = points[nextIndex - 1];
-    const after = points[nextIndex];
-    if (!before || !after) continue;
-    const span = daysBetween(before.date, after.date);
-    const progress = span > 0 ? daysBetween(before.date, date) / span : 0;
-    interpolated.set(date, before.weightKg + (after.weightKg - before.weightKg) * progress);
-  }
-  return interpolated;
 }
 
 function buildDailyCalories(entries: MealEntry[]) {
@@ -318,7 +276,7 @@ function MacroCard({
 }
 
 export default async function Home() {
-  const { entries, targets, metrics = defaultForecastMetrics, weights = [], available, source } = await getDashboardData();
+  const { entries, targets, available, source } = await getDashboardData();
   const today = isoTodayInTokyo();
   const selectedDate = today;
   const selectedEntries = entries.filter((entry) => entry.entryDate === selectedDate);
@@ -352,25 +310,7 @@ export default async function Home() {
     1,
   );
   const targetLine = Math.min(100, (targets.calories / chartMax) * 100);
-  const dailyWeights = buildDailyWeights(weights);
-  const weightByDate = new Map(dailyWeights.map((point) => [point.date, point.weightKg]));
-  const latestWeightPoint = dailyWeights[dailyWeights.length - 1];
-  const latestWeight = latestWeightPoint?.weightKg ?? metrics.currentWeightKg;
   const focusSignals = buildFocusSignals(totals, targets, tokyoHour(), selectedEntries.length > 0);
-  const firstWeightDate = dailyWeights[0]?.date ?? addDays(today, -13);
-  const weightDates = buildDateRange(firstWeightDate, addDays(today, 14));
-  const interpolatedWeights = interpolateWeightByDate(dailyWeights, weightDates);
-  const weightPoints = weightDates.map((date) => {
-    const actual = weightByDate.get(date) ?? null;
-    // Missing days are only used as linear interpolation input for the rolling trend;
-    // actual dots and labels remain restricted to real weighing records.
-    const prior = buildDateRange(addDays(date, -6), date).map((day) => interpolatedWeights.get(day)).filter((v): v is number => typeof v === "number");
-    const average = prior.length ? prior.reduce((a, b) => a + b, 0) / prior.length : null;
-    const forecast = latestWeightPoint && date >= latestWeightPoint.date
-      ? latestWeight - (2900 - targets.calories) * daysBetween(latestWeightPoint.date, date) / 7700
-      : null;
-    return { date, weight: actual, average, forecast };
-  });
   return (
     <main className="dashboard-shell">
       <CosmicBackground />
@@ -487,12 +427,6 @@ export default async function Home() {
           <article className="panel recent-panel">
             <DailyRecent dates={entries.map((entry) => entry.entryDate)} entries={entries} today={today} />
           </article>
-        </section>
-
-        <section className="panel historical-weight-panel">
-          <div className="panel-heading"><div><p className="eyebrow">真实称重记录</p><h2>历史体重</h2></div><span className="forecast-note">来自 Google Sheet / Apple Health</span></div>
-          {dailyWeights.length > 0 ? <HistoricalWeightChart points={weightPoints} today={today} /> : <div className="empty-state"><strong>暂时没有历史体重数据</strong><span>请先让 Google Sheet 桥接接口返回“体重”页的历史记录。</span></div>}
-          <p className="forecast-footnote">按每日消耗 2900 kcal、摄入目标 {Math.round(targets.calories)} kcal 推算；实线为真实体重，细线为 7 天滑动平均，虚线为预测体重。</p>
         </section>
 
         <footer>
