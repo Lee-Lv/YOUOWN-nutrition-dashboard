@@ -16,6 +16,7 @@ import {
 } from "../db/dashboard";
 import { CenteredTrend, DailyRecent } from "../components/dashboard-interactions";
 import { HistoricalWeightChart } from "../components/weight-chart";
+import { ThemeSwitcher } from "./theme-switcher";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -148,6 +149,46 @@ function shortDate(date: string) {
   }).format(new Date(`${date}T00:00:00Z`));
 }
 
+function progressState(value: number, target: number) {
+  const ratio = target ? value / target : 0;
+  if (ratio > 1) return "over";
+  if (ratio >= 0.85) return "critical";
+  if (ratio >= 0.66) return "approaching";
+  return "calm";
+}
+
+function SegmentedProgress({
+  label,
+  value,
+  target,
+  tone,
+  compactTrack = false,
+}: {
+  label: string;
+  value: number;
+  target: number;
+  tone: string;
+  compactTrack?: boolean;
+}) {
+  const progress = percent(value, target);
+  const state = progressState(value, target);
+  return (
+    <div
+      className={`progress-track segmented-track ${compactTrack ? "compact-track" : ""} state-${state}`}
+      style={{ "--tone": tone, "--progress": `${progress}%` } as CSSProperties}
+      role="progressbar"
+      aria-label={`${label}完成 ${Math.round((target ? value / target : 0) * 100)}%`}
+      aria-valuemin={0}
+      aria-valuemax={target}
+      aria-valuenow={value}
+    >
+      <div className="progress-fill" />
+      <span className="progress-separators" aria-hidden="true"><i /><i /><i /></span>
+      {state === "over" ? <span className="progress-spark" aria-hidden="true" /> : null}
+    </div>
+  );
+}
+
 function MacroCard({
   label,
   value,
@@ -163,9 +204,9 @@ function MacroCard({
   icon: React.ReactNode;
   tone: string;
 }) {
-  const progress = percent(value, target);
+  const state = progressState(value, target);
   return (
-    <article className="macro-card" style={{ "--tone": tone } as CSSProperties}>
+    <article className={`macro-card state-${state}`} style={{ "--tone": tone } as CSSProperties}>
       <div className="macro-heading">
         <span className="macro-icon">{icon}</span>
         <span>{label}</span>
@@ -174,9 +215,7 @@ function MacroCard({
         {compact(value)} <span>{unit}</span>
       </div>
       <div className="macro-target">目标 {compact(target)} {unit}</div>
-      <div className="progress-track" aria-label={`${label}完成 ${Math.round(progress)}%`}>
-        <div className="progress-fill" style={{ width: `${progress}%` }} />
-      </div>
+      <SegmentedProgress label={label} value={value} target={target} tone={tone} />
     </article>
   );
 }
@@ -214,6 +253,16 @@ export default async function Home() {
   const weightByDate = new Map(dailyWeights.map((point) => [point.date, point.weightKg]));
   const latestWeightPoint = dailyWeights[dailyWeights.length - 1];
   const latestWeight = latestWeightPoint?.weightKg ?? metrics.currentWeightKg;
+  const statusMetrics = [
+    { label: "蛋白质", value: totals.protein, target: targets.protein },
+    { label: "脂肪", value: totals.fat, target: targets.fat },
+    { label: "碳水", value: totals.carbs, target: targets.carbs },
+    { label: "膳食纤维", value: totals.fiber, target: targets.fiber },
+    { label: "盐分", value: totals.salt, target: targets.salt },
+  ];
+  const overItems = statusMetrics.filter((item) => item.value > item.target);
+  const nearItems = statusMetrics.filter((item) => item.value >= item.target * 0.85 && item.value <= item.target);
+  const statusItems = overItems.length ? overItems : nearItems;
   const firstWeightDate = dailyWeights[0]?.date ?? addDays(today, -13);
   const weightDates = buildDateRange(firstWeightDate, addDays(today, 14));
   const weightPoints = weightDates.map((date) => {
@@ -235,9 +284,12 @@ export default async function Home() {
             <span className="brand-mark"><Utensils size={18} /></span>
             <span>饮食 Dashboard</span>
           </div>
-          <div className={`sync-status ${source === "sheets" ? "is-live" : ""}`}>
-            <span />
-            {source === "sheets" ? "Google Sheet 实时" : available ? "显示缓存" : "正在连接"}
+          <div className="topbar-actions">
+            <ThemeSwitcher />
+            <div className={`sync-status ${source === "sheets" ? "is-live" : ""}`}>
+              <span />
+              {source === "sheets" ? "Google Sheet 实时" : available ? "显示缓存" : "正在连接"}
+            </div>
           </div>
         </header>
 
@@ -291,16 +343,12 @@ export default async function Home() {
               <div>
                 <span><Wheat size={17} />膳食纤维</span>
                 <strong>{compact(totals.fiber)} <small>/ {compact(targets.fiber)} g</small></strong>
-                <div className="progress-track compact-track">
-                  <div className="progress-fill fiber" style={{ width: `${percent(totals.fiber, targets.fiber)}%` }} />
-                </div>
+                <SegmentedProgress label="膳食纤维" value={totals.fiber} target={targets.fiber} tone="#73f7b4" compactTrack />
               </div>
               <div>
                 <span><Droplets size={17} />盐分</span>
                 <strong>{compact(totals.salt)} <small>/ {compact(targets.salt)} g</small></strong>
-                <div className="progress-track compact-track">
-                  <div className="progress-fill salt" style={{ width: `${percent(totals.salt, targets.salt)}%` }} />
-                </div>
+                <SegmentedProgress label="盐分" value={totals.salt} target={targets.salt} tone="#8dbdff" compactTrack />
               </div>
             </div>
           </article>
@@ -311,6 +359,17 @@ export default async function Home() {
           <MacroCard label="脂肪" value={totals.fat} target={targets.fat} unit="g" icon={<Droplets size={18} />} tone="#ffce71" />
           <MacroCard label="碳水" value={totals.carbs} target={targets.carbs} unit="g" icon={<Wheat size={18} />} tone="#8dbdff" />
         </section>
+
+        {statusItems.length > 0 ? (
+          <section className={`status-ribbon ${overItems.length ? "is-over" : "is-near"}`} aria-live="polite">
+            <span className="status-ribbon-orb" aria-hidden="true" />
+            <div>
+              <strong>{overItems.length ? "今天有项目超过目标" : "接近今日目标"}</strong>
+              <span>{statusItems.map((item) => item.label).join("、")}{overItems.length ? "，晚餐建议清淡一些" : "，接下来留意份量"}</span>
+            </div>
+            <span className="status-ribbon-mark">{overItems.length ? "注意" : "留意"}</span>
+          </section>
+        ) : null}
 
         <section className="lower-grid">
           <article className="panel trend-panel">
