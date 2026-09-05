@@ -168,8 +168,11 @@ function SegmentedProgress({
       <span className="progress-separators" aria-hidden="true"><i /><i /><i /></span>
       {state !== "calm" ? <span className="progress-spark" aria-hidden="true" /> : null}
       {state === "critical" || state === "over" ? (
-        <span className="progress-particles" aria-hidden="true"><i /><i /><i /></span>
+        <span className="progress-particles" aria-hidden="true">
+          <i /><i /><i /><i /><i /><i /><i /><i />
+        </span>
       ) : null}
+      {state === "over" ? <span className="progress-shockwave" aria-hidden="true" /> : null}
     </div>
   );
 }

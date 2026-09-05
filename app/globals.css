@@ -438,7 +438,7 @@ body {
 .progress-track {
   position: relative;
   height: 6px;
-  overflow: hidden;
+  overflow: visible;
   margin-top: 18px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.07);
@@ -452,6 +452,7 @@ body {
   border-radius: inherit;
   background: var(--tone);
   box-shadow: 0 0 13px color-mix(in srgb, var(--tone) 40%, transparent);
+  overflow: hidden;
 }
 
 .segmented-track {
@@ -510,6 +511,11 @@ body {
 .progress-particles i:nth-child(1) { left: calc(var(--progress, 0%) - 6px); }
 .progress-particles i:nth-child(2) { left: calc(var(--progress, 0%) - 15px); width: 2px; height: 2px; }
 .progress-particles i:nth-child(3) { left: calc(var(--progress, 0%) - 22px); width: 4px; height: 4px; }
+.progress-particles i:nth-child(4) { left: calc(var(--progress, 0%) - 30px); width: 2px; height: 2px; }
+.progress-particles i:nth-child(5) { left: calc(var(--progress, 0%) - 38px); width: 3px; height: 3px; }
+.progress-particles i:nth-child(6) { left: calc(var(--progress, 0%) - 47px); width: 2px; height: 2px; }
+.progress-particles i:nth-child(7) { left: calc(var(--progress, 0%) - 55px); width: 4px; height: 4px; }
+.progress-particles i:nth-child(8) { left: calc(var(--progress, 0%) - 64px); width: 2px; height: 2px; }
 
 .state-critical .progress-particles i,
 .state-over .progress-particles i {
@@ -520,6 +526,31 @@ body {
 .state-over .progress-particles i:nth-child(2) { animation-delay: -0.55s; }
 .state-critical .progress-particles i:nth-child(3),
 .state-over .progress-particles i:nth-child(3) { animation-delay: -1.05s; }
+.state-critical .progress-particles i:nth-child(4),
+.state-over .progress-particles i:nth-child(4) { animation-delay: -0.25s; }
+.state-critical .progress-particles i:nth-child(5),
+.state-over .progress-particles i:nth-child(5) { animation-delay: -0.8s; }
+.state-critical .progress-particles i:nth-child(6),
+.state-over .progress-particles i:nth-child(6) { animation-delay: -1.3s; }
+.state-critical .progress-particles i:nth-child(7),
+.state-over .progress-particles i:nth-child(7) { animation-delay: -1.55s; }
+.state-critical .progress-particles i:nth-child(8),
+.state-over .progress-particles i:nth-child(8) { animation-delay: -0.95s; }
+
+.progress-shockwave {
+  position: absolute;
+  top: 50%;
+  left: var(--progress, 100%);
+  z-index: 4;
+  width: 12px;
+  height: 12px;
+  border: 1px solid rgba(255, 194, 122, 0.9);
+  border-radius: 50%;
+  box-shadow: 0 0 14px rgba(255, 112, 91, 0.8);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  animation: overload-pulse 1.8s ease-out infinite;
+}
 
 .state-approaching .progress-fill,
 .state-critical .progress-fill {
@@ -587,8 +618,37 @@ body {
 }
 
 .macro-card.state-over {
+  position: relative;
+  isolation: isolate;
+  overflow: visible;
   border-color: rgba(255, 127, 117, 0.32);
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18), 0 0 34px rgba(255, 106, 94, 0.08);
+}
+
+.macro-card.state-over::before {
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  border: 1px solid rgba(255, 157, 110, 0.35);
+  border-radius: inherit;
+  content: "";
+  pointer-events: none;
+  animation: overload-frame 5.2s ease-in-out infinite;
+}
+
+.macro-card.state-over::after {
+  position: absolute;
+  top: 34%;
+  right: 8%;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 206, 129, 0.36), rgba(255, 99, 84, 0.08) 42%, transparent 72%);
+  content: "";
+  opacity: 0.34;
+  pointer-events: none;
+  filter: blur(5px);
+  animation: overload-cloud 3.4s ease-in-out infinite;
 }
 
 .macro-heading {
@@ -816,6 +876,21 @@ body {
   0% { opacity: 0; transform: translate(0, 3px) scale(0.6); }
   25% { opacity: 1; }
   100% { opacity: 0; transform: translate(4px, -13px) scale(1.05); }
+}
+
+@keyframes overload-pulse {
+  0% { opacity: 0.9; transform: translate(-50%, -50%) scale(0.55); }
+  70%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(3.4); }
+}
+
+@keyframes overload-frame {
+  0%, 100% { opacity: 0.25; box-shadow: 0 0 0 rgba(255, 103, 84, 0); }
+  50% { opacity: 0.95; box-shadow: 0 0 22px rgba(255, 103, 84, 0.24), inset 0 0 18px rgba(255, 167, 101, 0.08); }
+}
+
+@keyframes overload-cloud {
+  0%, 100% { opacity: 0.2; transform: translate3d(0, 3px, 0) scale(0.84); }
+  50% { opacity: 0.8; transform: translate3d(-7px, -5px, 0) scale(1.14); }
 }
 
 @keyframes ring-orbit {
@@ -1485,7 +1560,10 @@ footer {
   .dashboard-shell::after,
   .calorie-ring::before,
   .progress-spark,
+  .progress-shockwave,
   .progress-particles i,
+  .macro-card.state-over::before,
+  .macro-card.state-over::after,
   .ring-value,
   .progress-fill,
   .bar.active {
