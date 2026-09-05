@@ -359,10 +359,25 @@ body {
   stroke: rgba(115, 247, 180, 0.09);
 }
 
+.ring-overflow-track {
+  stroke: rgba(255, 120, 87, 0.19);
+  stroke-width: 8;
+}
+
 .ring-value {
   stroke: #73f7b4;
   stroke-linecap: round;
   filter: drop-shadow(0 0 8px rgba(115, 247, 180, 0.34));
+}
+
+.ring-overflow-value {
+  stroke: #ff956c;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 7px rgba(255, 107, 80, 0.7));
+}
+
+.calorie-ring.is-overflow .ring-value {
+  stroke: #73f7b4;
 }
 
 .calorie-ring > div {
@@ -388,6 +403,18 @@ body {
   margin-top: 3px;
   color: #eafff2;
   font-size: 1.1rem;
+}
+
+@keyframes ring-progress-breathe {
+  50% {
+    filter: drop-shadow(0 0 13px rgba(115, 247, 180, 0.62));
+  }
+}
+
+@keyframes ring-overflow-breathe {
+  50% {
+    filter: drop-shadow(0 0 13px rgba(255, 107, 80, 0.85));
+  }
 }
 
 .balance-card {
@@ -437,6 +464,7 @@ body {
 
 /* One shared scale for every nutrition meter: 0–100 is the plan, 100–120 is visible overflow. */
 .today-focus-card { position: relative; display: flex; min-height: 262px; flex-direction: column; padding: 25px 27px 22px; overflow: hidden; border: 1px solid rgba(130, 171, 156, 0.16); border-radius: 26px; background: radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--focus-tone, #73f7b4) 10%, transparent), transparent 43%), rgba(13, 25, 23, 0.86); box-shadow: 0 22px 60px rgba(0, 0, 0, 0.14); }
+.today-focus-card.is-single { align-self: start; min-height: 172px; }
 .today-focus-card.channel-danger, .today-focus-card.channel-over { border-color: rgba(255, 137, 103, 0.48); background: radial-gradient(circle at 92% 5%, rgba(255, 105, 79, 0.13), transparent 42%), linear-gradient(135deg, rgba(65, 31, 27, 0.38), rgba(13, 25, 23, 0.91) 56%); box-shadow: 0 22px 60px rgba(0, 0, 0, 0.14), 0 0 32px rgba(255, 99, 76, 0.08); }
 .today-focus-card.channel-near { border-color: rgba(255, 206, 113, 0.34); }
 .today-focus-card.channel-deficit { border-color: rgba(115, 247, 180, 0.3); }
@@ -454,6 +482,7 @@ body {
 
 .target-gate-meter { --gate-at: 83.333%; margin-top: 13px; }
 .target-gate-scale { display: grid; grid-template-columns: 1fr auto auto; margin: 0 1px 5px; color: #658078; font-size: 0.57rem; font-weight: 700; }
+.target-gate-meter:not(.state-over) .target-gate-scale { grid-template-columns: 1fr auto; }
 .target-gate-scale span:nth-child(2) { margin-right: 5px; color: #a3bdb2; }
 .target-gate-track { position: relative; height: 13px; overflow: visible; border: 1px solid rgba(155, 189, 175, 0.1); border-radius: 999px; background: linear-gradient(90deg, rgba(255, 255, 255, 0.055) 0 var(--gate-at), rgba(255, 115, 83, 0.10) var(--gate-at) 100%); }
 .target-gate-normal, .target-gate-overflow, .target-gate-hatch { position: absolute; top: 2px; bottom: 2px; border-radius: 999px; }
@@ -1548,6 +1577,10 @@ footer {
     padding: 21px 18px 18px;
   }
 
+  .today-focus-card.is-single {
+    min-height: 172px;
+  }
+
   .focus-primary {
     margin-top: 13px;
   }
@@ -1653,7 +1686,14 @@ footer {
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .ring-value,
+  .ring-value {
+    animation: reveal 700ms cubic-bezier(0.2, 0.8, 0.2, 1) both, ring-progress-breathe 4.4s ease-in-out 700ms infinite;
+  }
+
+  .ring-overflow-value {
+    animation: reveal 700ms cubic-bezier(0.2, 0.8, 0.2, 1) both, ring-overflow-breathe 1.55s ease-in-out 700ms infinite;
+  }
+
   .progress-fill,
   .bar.active {
     animation: reveal 700ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
@@ -1677,6 +1717,7 @@ footer {
   .progress-particles i,
   .target-gate-core,
   .target-gate-overflow,
+  .ring-overflow-value,
   .macro-card.state-over::before,
   .macro-card.state-over::after,
   .ring-value,

@@ -60,7 +60,7 @@ export function TodayFocus({ signals }: { signals: FocusSignal[] }) {
   const attentionCount = signals.filter((signal) => ["danger", "over", "near", "deficit"].includes(signal.channel)).length;
 
   return (
-    <article className={`today-focus-card channel-${active.channel}`} style={{ "--focus-tone": active.tone } as CSSProperties}>
+    <article className={`today-focus-card ${signals.length === 1 ? "is-single" : ""} channel-${active.channel}`} style={{ "--focus-tone": active.tone } as CSSProperties}>
       <div className="focus-card-header">
         <div><p className="eyebrow">{channelLabel(active)}</p><h2>今日重点</h2></div>
         {attentionCount > 1 ? <span className="focus-count"><ShieldAlert size={14} />{attentionCount} 项需注意</span> : null}

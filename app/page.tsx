@@ -54,11 +54,6 @@ function sumEntries(entries: MealEntry[]): Totals {
   );
 }
 
-function percent(value: number, target: number) {
-  if (!target) return 0;
-  return Math.min(100, Math.max(0, (value / target) * 100));
-}
-
 function compact(value: number, digits = 1) {
   return Number.isInteger(value) ? String(value) : value.toFixed(digits);
 }
@@ -115,6 +110,27 @@ function buildDailyWeights(weights: WeightPoint[]) {
     const weightKg = sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
     return { date, weightKg, count: sorted.length };
   }).sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function interpolateWeightByDate(points: Array<{ date: string; weightKg: number }>, dates: string[]) {
+  const actual = new Map(points.map((point) => [point.date, point.weightKg]));
+  const interpolated = new Map<string, number>();
+  let nextIndex = 0;
+  for (const date of dates) {
+    const exact = actual.get(date);
+    if (typeof exact === "number") {
+      interpolated.set(date, exact);
+      continue;
+    }
+    while (nextIndex < points.length && points[nextIndex].date < date) nextIndex += 1;
+    const before = points[nextIndex - 1];
+    const after = points[nextIndex];
+    if (!before || !after) continue;
+    const span = daysBetween(before.date, after.date);
+    const progress = span > 0 ? daysBetween(before.date, date) / span : 0;
+    interpolated.set(date, before.weightKg + (after.weightKg - before.weightKg) * progress);
+  }
+  return interpolated;
 }
 
 function buildDailyCalories(entries: MealEntry[]) {
@@ -307,11 +323,17 @@ export default async function Home() {
   const selectedDate = today;
   const selectedEntries = entries.filter((entry) => entry.entryDate === selectedDate);
   const totals = sumEntries(selectedEntries);
-  const calorieProgress = percent(totals.calories, targets.calories);
+  const calorieRatio = targets.calories > 0 ? totals.calories / targets.calories : 0;
   const remaining = targets.calories - totals.calories;
   const calorieState = progressState(totals.calories, targets.calories);
   const circumference = 301.59;
-  const dashOffset = circumference * (1 - calorieProgress / 100);
+  const calorieOver = calorieRatio > 1;
+  const calorieScale = calorieOver ? 1.2 : 1;
+  const ringNormalProgress = Math.min(calorieRatio, 1) / calorieScale;
+  const ringOverflowProgress = calorieOver ? Math.min(calorieRatio - 1, 0.2) / calorieScale : 0;
+  const ringNormalOffset = circumference * (1 - ringNormalProgress);
+  const ringOverflowLength = circumference * ringOverflowProgress;
+  const ringTargetOffset = -circumference * (1 / calorieScale);
 
   const dailyCalories = buildDailyCalories(entries);
   const earliestDate = entries.reduce(
@@ -337,10 +359,13 @@ export default async function Home() {
   const focusSignals = buildFocusSignals(totals, targets, tokyoHour(), selectedEntries.length > 0);
   const firstWeightDate = dailyWeights[0]?.date ?? addDays(today, -13);
   const weightDates = buildDateRange(firstWeightDate, addDays(today, 14));
+  const interpolatedWeights = interpolateWeightByDate(dailyWeights, weightDates);
   const weightPoints = weightDates.map((date) => {
     const actual = weightByDate.get(date) ?? null;
-    const prior = buildDateRange(addDays(date, -6), date).map((day) => weightByDate.get(day)).filter((v): v is number => typeof v === "number");
-    const average = prior.length >= 2 ? prior.reduce((a, b) => a + b, 0) / prior.length : null;
+    // Missing days are only used as linear interpolation input for the rolling trend;
+    // actual dots and labels remain restricted to real weighing records.
+    const prior = buildDateRange(addDays(date, -6), date).map((day) => interpolatedWeights.get(day)).filter((v): v is number => typeof v === "number");
+    const average = prior.length ? prior.reduce((a, b) => a + b, 0) / prior.length : null;
     const forecast = latestWeightPoint && date >= latestWeightPoint.date
       ? latestWeight - (2900 - targets.calories) * daysBetween(latestWeightPoint.date, date) / 7700
       : null;
@@ -382,25 +407,27 @@ export default async function Home() {
               </p>
               <div className="calorie-meta">
                 <span>每日目标 {targets.calories.toLocaleString("zh-CN")}</span>
-                <strong>{Math.round(calorieProgress)}%</strong>
+                <strong>{Math.round(calorieRatio * 100)}%</strong>
               </div>
             </div>
 
-            <div className={`calorie-ring state-${calorieState}`} aria-label={`热量目标完成 ${Math.round(calorieProgress)}%`}>
+            <div className={`calorie-ring ${calorieOver ? "is-overflow" : ""} state-${calorieState}`} aria-label={`热量目标完成 ${Math.round(calorieRatio * 100)}%`}>
               <svg viewBox="0 0 112 112" role="img">
                 <circle className="ring-track" cx="56" cy="56" r="48" />
+                {calorieOver ? <circle className="ring-overflow-track" cx="56" cy="56" r="48" strokeDasharray={`${circumference / 6} ${circumference}`} strokeDashoffset={ringTargetOffset} /> : null}
                 <circle
                   className="ring-value"
                   cx="56"
                   cy="56"
                   r="48"
                   strokeDasharray={circumference}
-                  strokeDashoffset={dashOffset}
+                  strokeDashoffset={ringNormalOffset}
                 />
+                {calorieOver ? <circle className="ring-overflow-value" cx="56" cy="56" r="48" strokeDasharray={`${ringOverflowLength} ${circumference}`} strokeDashoffset={ringTargetOffset} /> : null}
               </svg>
               <div className="ring-content">
                 <Flame size={22} />
-                <strong>{Math.round(calorieProgress)}%</strong>
+                <strong>{Math.round(calorieRatio * 100)}%</strong>
               </div>
             </div>
           </article>

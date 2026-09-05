@@ -35,6 +35,22 @@ function lineSegments(points: Point[], key: "weight" | "average" | "forecast") {
   return result;
 }
 
+function smoothPath(coordinates: Array<{ x: number; y: number }>) {
+  if (!coordinates.length) return "";
+  if (coordinates.length === 1) return `M ${coordinates[0].x} ${coordinates[0].y}`;
+  let path = `M ${coordinates[0].x} ${coordinates[0].y}`;
+  for (let index = 0; index < coordinates.length - 1; index += 1) {
+    const before = coordinates[Math.max(0, index - 1)];
+    const current = coordinates[index];
+    const next = coordinates[index + 1];
+    const after = coordinates[Math.min(coordinates.length - 1, index + 2)];
+    const firstControl = { x: current.x + (next.x - before.x) / 6, y: current.y + (next.y - before.y) / 6 };
+    const secondControl = { x: next.x - (after.x - current.x) / 6, y: next.y - (after.y - current.y) / 6 };
+    path += ` C ${firstControl.x} ${firstControl.y}, ${secondControl.x} ${secondControl.y}, ${next.x} ${next.y}`;
+  }
+  return path;
+}
+
 function shortDate(date: string) {
   return `${Number(date.slice(5, 7))}/${Number(date.slice(8, 10))}`;
 }
@@ -74,7 +90,7 @@ export function HistoricalWeightChart({ points, today }: { points: Point[]; toda
     if (Math.abs(delta) > 42) shift(delta < 0 ? 7 : -7);
   };
   const draw = (key: "weight" | "average" | "forecast", className: string) => lineSegments(visible, key).map((segment, index) => (
-    <polyline key={`${key}-${index}`} points={segment.map((point) => `${x(visible.indexOf(point))},${y(point[key] as number)}`).join(" ")} className={className} />
+    <path key={`${key}-${index}`} d={smoothPath(segment.map((point) => ({ x: x(visible.indexOf(point)), y: y(point[key] as number) })))} className={className} />
   ));
 
   if (!points.length) return null;
