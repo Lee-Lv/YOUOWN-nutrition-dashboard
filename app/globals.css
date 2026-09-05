@@ -95,28 +95,14 @@ body {
   will-change: transform, opacity, background-position;
 }
 
-.ambient {
+.cosmic-background {
   position: fixed;
+  inset: 0;
   z-index: 0;
-  width: 38rem;
-  height: 38rem;
-  border-radius: 999px;
-  filter: blur(62px);
-  opacity: 0.25;
-  will-change: transform, opacity;
+  display: block;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
-}
-
-.ambient-one {
-  top: -9rem;
-  right: -6rem;
-  background: radial-gradient(circle at 42% 43%, rgba(115, 247, 180, 0.95), rgba(115, 247, 180, 0.34) 29%, transparent 71%);
-}
-
-.ambient-two {
-  bottom: -12rem;
-  left: -8rem;
-  background: radial-gradient(circle at 53% 42%, rgba(69, 142, 255, 0.8), rgba(49, 117, 226, 0.28) 31%, transparent 72%);
 }
 
 .dashboard-wrap {
@@ -739,14 +725,6 @@ body {
   pointer-events: none;
 }
 
-[data-visual-theme="instrument"] .ambient-one {
-  background: radial-gradient(circle at 42% 43%, rgba(141, 189, 255, 0.92), rgba(141, 189, 255, 0.3) 29%, transparent 71%);
-}
-
-[data-visual-theme="instrument"] .ambient-two {
-  background: radial-gradient(circle at 53% 42%, rgba(56, 217, 202, 0.82), rgba(56, 217, 202, 0.27) 31%, transparent 72%);
-}
-
 [data-visual-theme="instrument"] .calorie-card,
 [data-visual-theme="instrument"] .balance-card,
 [data-visual-theme="instrument"] .macro-card,
@@ -850,14 +828,6 @@ body {
     animation: atmosphere-sweep 12s cubic-bezier(0.45, 0, 0.2, 1) infinite alternate;
   }
 
-  .ambient-one {
-    animation: ambient-drift-one 11s cubic-bezier(0.45, 0, 0.2, 1) infinite;
-  }
-
-  .ambient-two {
-    animation: ambient-drift-two 15s cubic-bezier(0.45, 0, 0.2, 1) infinite;
-  }
-
   @keyframes atmosphere-sweep {
     0% {
       opacity: 0.36;
@@ -876,17 +846,6 @@ body {
     }
   }
 
-  @keyframes ambient-drift-one {
-    0%, 100% { opacity: 0.18; transform: translate3d(0, 0, 0) scale(0.88); }
-    46% { opacity: 0.42; transform: translate3d(-110px, 58px, 0) scale(1.12); }
-    72% { opacity: 0.27; transform: translate3d(-42px, 106px, 0) scale(0.98); }
-  }
-
-  @keyframes ambient-drift-two {
-    0%, 100% { opacity: 0.15; transform: translate3d(0, 0, 0) scale(0.9); }
-    44% { opacity: 0.36; transform: translate3d(100px, -72px, 0) scale(1.13); }
-    73% { opacity: 0.22; transform: translate3d(48px, -120px, 0) scale(0.99); }
-  }
 }
 
 .lower-grid {
@@ -1365,12 +1324,6 @@ footer {
     opacity: 0.48;
   }
 
-  .ambient {
-    width: 29rem;
-    height: 29rem;
-    filter: blur(52px);
-  }
-
   .dashboard-wrap {
     padding: 17px 12px 28px;
   }
@@ -1530,8 +1483,6 @@ footer {
 
 @media (prefers-reduced-motion: reduce) {
   .dashboard-shell::after,
-  .ambient-one,
-  .ambient-two,
   .calorie-ring::before,
   .progress-spark,
   .progress-particles i,

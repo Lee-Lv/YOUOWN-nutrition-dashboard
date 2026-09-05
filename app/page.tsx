@@ -14,6 +14,7 @@ import {
 } from "../db/dashboard";
 import { CenteredTrend, DailyRecent } from "../components/dashboard-interactions";
 import { HistoricalWeightChart } from "../components/weight-chart";
+import { CosmicBackground } from "../components/cosmic-background";
 import { ThemeSwitcher } from "./theme-switcher";
 
 export const dynamic = "force-dynamic";
@@ -260,8 +261,7 @@ export default async function Home() {
   });
   return (
     <main className="dashboard-shell">
-      <div className="ambient ambient-one" />
-      <div className="ambient ambient-two" />
+      <CosmicBackground />
       <div className="dashboard-wrap">
         <header className="topbar">
           <div className="brand">
