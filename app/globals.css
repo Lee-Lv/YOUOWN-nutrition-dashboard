@@ -550,8 +550,8 @@ body {
   box-shadow: 0 0 10px #fff0b0, 0 0 24px #ff7a3d, 0 0 52px rgba(255, 54, 38, 0.95), 0 0 86px rgba(255, 40, 32, 0.55);
   pointer-events: none;
   transform: translate(-50%, -50%);
-  animation: overload-pulse 1.15s ease-out infinite;
-  filter: saturate(1.45) brightness(1.2);
+  animation: overload-pulse calc(1.45s - var(--overdrive, 0) * 0.3s) ease-out infinite;
+  filter: saturate(calc(1.05 + var(--overdrive, 0) * 0.4)) brightness(calc(0.95 + var(--overdrive, 0) * 0.25));
 }
 
 .progress-shockwave::before,
@@ -562,7 +562,7 @@ body {
   border-radius: inherit;
   content: "";
   pointer-events: none;
-  animation: overload-ring 1.15s ease-out infinite;
+  animation: overload-ring calc(1.45s - var(--overdrive, 0) * 0.3s) ease-out infinite;
 }
 
 .progress-shockwave::after {
@@ -587,7 +587,7 @@ body {
 
 .state-over .progress-fill {
   background: linear-gradient(90deg, var(--tone), #ffad70 82%, #ff7f75);
-  box-shadow: 0 0 22px rgba(255, 154, 103, 0.95), 0 0 46px rgba(255, 96, 91, 0.66), 0 0 78px rgba(255, 54, 54, 0.36);
+  box-shadow: 0 0 22px rgba(255, 154, 103, calc(0.45 + var(--overdrive, 0) * 0.5)), 0 0 46px rgba(255, 96, 91, calc(0.18 + var(--overdrive, 0) * 0.48)), 0 0 78px rgba(255, 54, 54, calc(0.08 + var(--overdrive, 0) * 0.28));
 }
 
 .compact-track {
@@ -641,7 +641,7 @@ body {
   isolation: isolate;
   overflow: visible;
   border-color: rgba(255, 127, 117, 0.7);
-  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18), 0 0 34px rgba(255, 106, 94, 0.22), 0 0 76px rgba(255, 69, 62, 0.16);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18), 0 0 34px rgba(255, 106, 94, calc(0.08 + var(--overdrive, 0) * 0.22)), 0 0 76px rgba(255, 69, 62, calc(0.05 + var(--overdrive, 0) * 0.16));
 }
 
 .macro-card.state-over > * {
@@ -658,6 +658,7 @@ body {
   content: "";
   pointer-events: none;
   animation: overload-frame 5.2s ease-in-out infinite;
+  opacity: calc(0.45 + var(--overdrive, 0) * 0.55);
 }
 
 .macro-card.state-over::after {
@@ -670,7 +671,7 @@ body {
   border-radius: 50%;
   background: radial-gradient(circle, rgba(255, 206, 129, 0.36), rgba(255, 99, 84, 0.08) 42%, transparent 72%);
   content: "";
-  opacity: 0.72;
+  opacity: calc(0.24 + var(--overdrive, 0) * 0.48);
   pointer-events: none;
   filter: blur(5px);
   animation: overload-cloud 3.4s ease-in-out infinite;
@@ -914,8 +915,8 @@ body {
 }
 
 @keyframes overload-frame {
-  0%, 100% { opacity: 0.42; box-shadow: 0 0 12px rgba(255, 103, 84, 0.16); }
-  50% { opacity: 1; box-shadow: 0 0 34px rgba(255, 103, 84, 0.58), 0 0 72px rgba(255, 64, 61, 0.24), inset 0 0 24px rgba(255, 167, 101, 0.16); }
+  0%, 100% { opacity: calc(0.2 + var(--overdrive, 0) * 0.35); box-shadow: 0 0 12px rgba(255, 103, 84, calc(0.05 + var(--overdrive, 0) * 0.14)); }
+  50% { opacity: calc(0.48 + var(--overdrive, 0) * 0.52); box-shadow: 0 0 34px rgba(255, 103, 84, calc(0.16 + var(--overdrive, 0) * 0.42)), 0 0 72px rgba(255, 64, 61, calc(0.06 + var(--overdrive, 0) * 0.18)), inset 0 0 24px rgba(255, 167, 101, calc(0.05 + var(--overdrive, 0) * 0.11)); }
 }
 
 @keyframes overload-cloud {

@@ -154,10 +154,11 @@ function SegmentedProgress({
 }) {
   const progress = percent(value, target);
   const state = progressState(value, target);
+  const overdrive = target > 0 ? Math.min(1, Math.max(0, (value - target) / (target * 0.2))) : 0;
   return (
     <div
       className={`progress-track segmented-track ${compactTrack ? "compact-track" : ""} state-${state}`}
-      style={{ "--tone": tone, "--progress": `${progress}%` } as CSSProperties}
+      style={{ "--tone": tone, "--progress": `${progress}%`, "--overdrive": overdrive } as CSSProperties}
       role="progressbar"
       aria-label={`${label}完成 ${Math.round((target ? value / target : 0) * 100)}%`}
       aria-valuemin={0}
@@ -193,8 +194,9 @@ function MacroCard({
   tone: string;
 }) {
   const state = progressState(value, target);
+  const overdrive = target > 0 ? Math.min(1, Math.max(0, (value - target) / (target * 0.2))) : 0;
   return (
-    <article className={`macro-card state-${state}`} style={{ "--tone": tone } as CSSProperties}>
+    <article className={`macro-card state-${state}`} style={{ "--tone": tone, "--overdrive": overdrive } as CSSProperties}>
       <div className="macro-heading">
         <span className="macro-icon">{icon}</span>
         <span>{label}</span>
