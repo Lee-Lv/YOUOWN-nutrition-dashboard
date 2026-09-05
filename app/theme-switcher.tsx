@@ -6,10 +6,16 @@ import { Aperture, Sparkles } from "lucide-react";
 type VisualTheme = "pulse" | "instrument";
 
 export function ThemeSwitcher() {
-  const [theme, setTheme] = useState<VisualTheme>(() => {
-    if (typeof window === "undefined") return "pulse";
-    return window.localStorage.getItem("nutrition-dashboard-theme") === "instrument" ? "instrument" : "pulse";
-  });
+  const [theme, setTheme] = useState<VisualTheme>("pulse");
+
+  useEffect(() => {
+    const saved = window.localStorage.getItem("nutrition-dashboard-theme");
+    const next: VisualTheme = saved === "instrument" ? "instrument" : "pulse";
+    document.documentElement.dataset.visualTheme = next;
+    if (next !== "pulse") {
+      queueMicrotask(() => setTheme(next));
+    }
+  }, []);
 
   useEffect(() => {
     document.documentElement.dataset.visualTheme = theme;
