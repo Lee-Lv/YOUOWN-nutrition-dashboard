@@ -1136,6 +1136,10 @@ body {
   opacity: 0.8;
 }
 
+.bar.forecast-reference {
+  opacity: 0.52;
+}
+
 .bar.empty {
   background: #15251f;
   opacity: 0.7;
@@ -1190,6 +1194,21 @@ body {
 
 .scroll-hint {
   margin: 4px 0 0;
+}
+
+.forecast-summary-line {
+  margin: 6px 0 0;
+  color: #8ca79c;
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
+.forecast-summary-line.forecast {
+  color: #9bcbb9;
+}
+
+.forecast-summary-line.target-reference {
+  color: #d5a67e;
 }
 
 .forecast-panel {

@@ -11,6 +11,7 @@ import { CenteredTrend, DailyRecent } from "../components/dashboard-interactions
 import { CosmicBackground } from "../components/cosmic-background";
 import { TargetGateMeter } from "../components/target-gate-meter";
 import { TodayFocus, type FocusSignal } from "../components/today-focus";
+import { forecastNextSevenDays } from "../lib/calorie-forecast";
 import { ThemeSwitcher } from "./theme-switcher";
 
 export const dynamic = "force-dynamic";
@@ -294,19 +295,21 @@ export default async function Home() {
   const ringTargetOffset = -circumference * (1 / calorieScale);
 
   const dailyCalories = buildDailyCalories(entries);
+  const calorieForecast = forecastNextSevenDays(dailyCalories, today, targets.calories);
   const earliestDate = entries.reduce(
     (earliest, entry) => (entry.entryDate < earliest ? entry.entryDate : earliest),
     selectedDate,
   );
-  const timelineDates = buildDateRange(addDays(earliestDate, -2), addDays(selectedDate, 30));
+  const timelineDates = buildDateRange(addDays(earliestDate, -2), addDays(selectedDate, 7));
   const timelineDays = timelineDates.map((date) => ({
     date,
     actualCalories: dailyCalories.has(date) ? dailyCalories.get(date) ?? 0 : null,
-    isForecast: date > selectedDate,
+    forecastCalories: calorieForecast.byDate.get(date) ?? null,
+    isForecast: date > selectedDate && calorieForecast.byDate.has(date),
   }));
   const chartMax = Math.max(
     targets.calories * 1.15,
-    ...timelineDays.map((day) => day.actualCalories ?? 0),
+    ...timelineDays.map((day) => day.actualCalories ?? day.forecastCalories ?? 0),
     1,
   );
   const targetLine = Math.min(100, (targets.calories / chartMax) * 100);
@@ -385,8 +388,14 @@ export default async function Home() {
           <article className="panel trend-panel">
             <div className="panel-heading">
               <div>
-                <p className="eyebrow">历史＋未来 30 天</p>
+                <p className="eyebrow">历史＋未来 7 天</p>
                 <h2>热量趋势</h2>
+                <p className={`forecast-summary-line ${calorieForecast.status}`}>
+                  未来7天预计 {Math.round(calorieForecast.weeklyTotal).toLocaleString("zh-CN")} kcal
+                  {calorieForecast.trendPercent !== null && calorieForecast.status !== "target-reference"
+                    ? ` · 较近期周均 ${calorieForecast.trendPercent >= 0 ? "+" : ""}${Math.round(calorieForecast.trendPercent)}%`
+                    : " · 目标参考"}
+                </p>
               </div>
               <div className="trend-legend">
                 <span className="target-legend"><i />目标线</span>
@@ -401,18 +410,18 @@ export default async function Home() {
               >
                 <div className="target-line" style={{ bottom: `${targetLine}%` }} />
                 {timelineDays.map((day) => {
-                  const total = day.actualCalories ?? (day.isForecast ? targets.calories : 0);
+                  const total = day.actualCalories ?? day.forecastCalories ?? 0;
                   const height = Math.max(total ? 8 : 2, (total / chartMax) * 100);
                   const label = day.actualCalories !== null
                     ? Math.round(day.actualCalories).toLocaleString("zh-CN")
-                    : day.date === addDays(selectedDate, 1)
-                      ? "预测"
+                    : day.forecastCalories !== null
+                      ? Math.round(day.forecastCalories).toLocaleString("zh-CN")
                       : "";
                   return (
-                    <div className="bar-slot" key={day.date} data-date={day.date}>
+                    <div className="bar-slot" key={day.date} data-date={day.date} aria-label={`${shortDate(day.date)} ${day.actualCalories !== null ? `实际 ${Math.round(day.actualCalories)} kcal` : day.forecastCalories !== null ? `预测 ${Math.round(day.forecastCalories)} kcal` : "没有记录"}`}>
                       <span className="bar-value">{label}</span>
                       <div
-                        className={`bar ${day.date === selectedDate ? "active" : ""} ${day.isForecast ? "forecast" : ""} ${day.actualCalories === null && !day.isForecast ? "empty" : ""}`}
+                        className={`bar ${day.date === selectedDate ? "active" : ""} ${day.isForecast ? "forecast" : ""} ${calorieForecast.status === "target-reference" && day.isForecast ? "forecast-reference" : ""} ${day.actualCalories === null && !day.isForecast ? "empty" : ""}`}
                         style={{ height: `${height}%` }}
                       />
                       <span className="bar-date">{shortDate(day.date)}</span>
@@ -421,7 +430,7 @@ export default async function Home() {
                 })}
               </div>
             </CenteredTrend>
-            <p className="scroll-hint">左右滑动查看更早记录与未来预测</p>
+            <p className="scroll-hint">按历史周总量趋势与星期节奏预测；左右滑动查看更早记录。</p>
           </article>
 
           <article className="panel recent-panel">
