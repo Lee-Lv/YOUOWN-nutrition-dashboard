@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -14,6 +14,14 @@ export const metadata: Metadata = {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
   },
+};
+
+export const viewport: Viewport = {
+  // Vinext currently serializes `width` verbatim but omits Next's viewportFit field.
+  // Keeping viewport-fit here ensures Mobile Safari actually receives the directive.
+  width: "device-width, viewport-fit=cover",
+  initialScale: 1,
+  themeColor: "#07100f",
 };
 
 export default function RootLayout({

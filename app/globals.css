@@ -62,6 +62,7 @@ html {
 
 body {
   min-width: 320px;
+  min-height: 100svh;
   margin: 0;
   background: var(--background);
   color: var(--foreground);
@@ -72,6 +73,7 @@ body {
 .dashboard-shell {
   position: relative;
   min-height: 100vh;
+  min-height: 100svh;
   overflow: hidden;
   isolation: isolate;
   background:
@@ -115,13 +117,17 @@ body {
 
 .topbar {
   display: flex;
+  min-width: 0;
   align-items: center;
   justify-content: space-between;
+  gap: 14px;
   margin-bottom: 24px;
 }
 
 .topbar-actions {
   display: flex;
+  min-width: 0;
+  flex: 0 1 auto;
   align-items: center;
   gap: 14px;
 }
@@ -157,12 +163,15 @@ body {
 
 .brand {
   display: flex;
+  min-width: 0;
+  flex: 0 1 auto;
   align-items: center;
   gap: 11px;
   color: #f3fff8;
   font-size: 1.08rem;
   font-weight: 700;
   letter-spacing: -0.01em;
+  white-space: nowrap;
 }
 
 .brand-mark {
@@ -178,14 +187,17 @@ body {
 
 .sync-status {
   display: flex;
+  min-width: 0;
   align-items: center;
   gap: 7px;
   color: #789087;
   font-size: 0.78rem;
   font-weight: 650;
+  white-space: nowrap;
 }
 
-.sync-status > span {
+.sync-status > .sync-dot {
+  flex: 0 0 auto;
   width: 12px;
   height: 12px;
   border-radius: 999px;
@@ -196,7 +208,7 @@ body {
   color: #a3c9ba;
 }
 
-.sync-status.is-live > span {
+.sync-status.is-live > .sync-dot {
   background: #73f7b4;
   box-shadow: 0 0 0 4px rgba(115, 247, 180, 0.08), 0 0 16px rgba(115, 247, 180, 0.5);
 }
@@ -1802,19 +1814,60 @@ footer {
   }
 
   .dashboard-wrap {
-    padding: 17px 12px 28px;
+    padding:
+      calc(env(safe-area-inset-top, 0px) + 8px)
+      calc(env(safe-area-inset-right, 0px) + 12px)
+      calc(env(safe-area-inset-bottom, 0px) + 28px)
+      calc(env(safe-area-inset-left, 0px) + 12px);
   }
 
   .topbar {
-    flex-wrap: wrap;
-    gap: 12px;
+    flex-wrap: nowrap;
+    gap: 7px;
     margin-bottom: 16px;
-    padding: 0 4px;
+    padding: 0;
   }
 
   .topbar-actions {
     margin-left: auto;
-    gap: 8px;
+    gap: 6px;
+  }
+
+  .brand {
+    gap: 7px;
+    font-size: 0.82rem;
+  }
+
+  .brand-mark {
+    width: 30px;
+    height: 30px;
+    border-radius: 10px;
+  }
+
+  .brand-mark svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .theme-switcher {
+    gap: 5px;
+    padding: 7px 9px;
+    font-size: 0.64rem;
+  }
+
+  .theme-switcher svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  .sync-status {
+    gap: 5px;
+    font-size: 0.62rem;
+  }
+
+  .sync-status > .sync-dot {
+    width: 8px;
+    height: 8px;
   }
 
   .calorie-card {
@@ -1980,8 +2033,8 @@ footer {
 }
 
 @media (max-width: 380px) {
-  .sync-status {
-    font-size: 0;
+  .sync-source {
+    display: none;
   }
 
   .calorie-card {

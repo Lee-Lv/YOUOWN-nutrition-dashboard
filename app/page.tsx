@@ -351,8 +351,10 @@ export default async function Home() {
           <div className="topbar-actions">
             <ThemeSwitcher />
             <div className={`sync-status ${source === "sheets" ? "is-live" : ""}`}>
-              <span />
-              {source === "sheets" ? "Google Sheet 实时" : available ? "显示缓存" : "正在连接"}
+              <span className="sync-dot" />
+              <span className="sync-label">
+                {source === "sheets" ? <><span className="sync-source">Google Sheet </span>实时</> : available ? "显示缓存" : "正在连接"}
+              </span>
             </div>
           </div>
         </header>
