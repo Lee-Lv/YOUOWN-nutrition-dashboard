@@ -11,7 +11,9 @@ import { CenteredTrend, DailyRecent } from "../components/dashboard-interactions
 import { CosmicBackground } from "../components/cosmic-background";
 import { TargetGateMeter } from "../components/target-gate-meter";
 import { TodayFocus, type FocusSignal } from "../components/today-focus";
+import { CalorieUncertaintyMeter } from "../components/calorie-uncertainty-meter";
 import { forecastNextSevenDays } from "../lib/calorie-forecast";
+import { calorieUncertainty, uncertaintyStatus } from "../lib/calorie-uncertainty";
 import { ThemeSwitcher } from "./theme-switcher";
 
 export const dynamic = "force-dynamic";
@@ -115,6 +117,21 @@ function shortDate(date: string) {
     month: "numeric",
     day: "numeric",
   }).format(new Date(`${date}T00:00:00Z`));
+}
+
+function dashedArc(length: number, circumference: number) {
+  const arc = Math.min(Math.max(0, length), circumference);
+  const pattern: number[] = [];
+  let remaining = arc;
+  while (remaining > 0.01) {
+    const segment = Math.min(3.5, remaining);
+    pattern.push(segment);
+    remaining -= segment;
+  }
+  const rest = Math.max(0.01, circumference - arc);
+  if (pattern.length % 2 === 0) pattern.push(0.01);
+  pattern.push(rest);
+  return pattern.map((segment) => segment.toFixed(2)).join(" ");
 }
 
 function progressState(value: number, target: number) {
@@ -282,17 +299,25 @@ export default async function Home() {
   const selectedDate = today;
   const selectedEntries = entries.filter((entry) => entry.entryDate === selectedDate);
   const totals = sumEntries(selectedEntries);
+  const calorieRange = calorieUncertainty(selectedEntries);
   const calorieRatio = targets.calories > 0 ? totals.calories / targets.calories : 0;
   const remaining = targets.calories - totals.calories;
   const calorieState = progressState(totals.calories, targets.calories);
   const circumference = 301.59;
   const calorieOver = calorieRatio > 1;
-  const calorieScale = calorieOver ? 1.2 : 1;
+  const rangeStatus = uncertaintyStatus(calorieRange.low, calorieRange.high, targets.calories);
+  const calorieScale = calorieOver || calorieRange.high > targets.calories ? 1.2 : 1;
   const ringNormalProgress = Math.min(calorieRatio, 1) / calorieScale;
   const ringOverflowProgress = calorieOver ? Math.min(calorieRatio - 1, 0.2) / calorieScale : 0;
   const ringNormalOffset = circumference * (1 - ringNormalProgress);
   const ringOverflowLength = circumference * ringOverflowProgress;
   const ringTargetOffset = -circumference * (1 / calorieScale);
+  const uncertaintyCircumference = 326.73;
+  const uncertaintyLowProgress = Math.min(calorieRange.low / targets.calories, calorieScale) / calorieScale;
+  const uncertaintyHighProgress = Math.min(calorieRange.high / targets.calories, calorieScale) / calorieScale;
+  const uncertaintyArcLength = Math.max(0, uncertaintyHighProgress - uncertaintyLowProgress) * uncertaintyCircumference;
+  const uncertaintyArcOffset = -uncertaintyLowProgress * uncertaintyCircumference;
+  const uncertaintyArcPattern = dashedArc(uncertaintyArcLength, uncertaintyCircumference);
 
   const dailyCalories = buildDailyCalories(entries);
   const calorieForecast = forecastNextSevenDays(dailyCalories, today, targets.calories);
@@ -354,10 +379,14 @@ export default async function Home() {
               </div>
             </div>
 
-            <div className={`calorie-ring ${calorieOver ? "is-overflow" : ""} state-${calorieState}`} aria-label={`热量目标完成 ${Math.round(calorieRatio * 100)}%`}>
+            <div className={`calorie-ring ${calorieOver ? "is-overflow" : ""} state-${calorieState} uncertainty-${rangeStatus}`} aria-label={`热量目标完成 ${Math.round(calorieRatio * 100)}%，估算范围 ${Math.round(calorieRange.low)} 至 ${Math.round(calorieRange.high)} 千卡`}>
               <svg viewBox="0 0 112 112" role="img">
+                {selectedEntries.length ? <>
+                  <circle className="ring-uncertainty-band" cx="56" cy="56" r="52" strokeDasharray={`${uncertaintyArcLength} ${uncertaintyCircumference}`} strokeDashoffset={uncertaintyArcOffset} />
+                  <circle className="ring-uncertainty-halo" cx="56" cy="56" r="52" strokeDasharray={uncertaintyArcPattern} strokeDashoffset={uncertaintyArcOffset} />
+                </> : null}
                 <circle className="ring-track" cx="56" cy="56" r="48" />
-                {calorieOver ? <circle className="ring-overflow-track" cx="56" cy="56" r="48" strokeDasharray={`${circumference / 6} ${circumference}`} strokeDashoffset={ringTargetOffset} /> : null}
+                {calorieScale > 1 ? <circle className="ring-overflow-track" cx="56" cy="56" r="48" strokeDasharray={`${circumference / 6} ${circumference}`} strokeDashoffset={ringTargetOffset} /> : null}
                 <circle
                   className="ring-value"
                   cx="56"
@@ -373,6 +402,14 @@ export default async function Home() {
                 <strong>{Math.round(calorieRatio * 100)}%</strong>
               </div>
             </div>
+            {selectedEntries.length ? (
+              <CalorieUncertaintyMeter
+                low={calorieRange.low}
+                center={calorieRange.center}
+                high={calorieRange.high}
+                target={targets.calories}
+              />
+            ) : null}
           </article>
 
           <TodayFocus signals={focusSignals} />

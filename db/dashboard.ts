@@ -2,6 +2,7 @@ import { env } from "cloudflare:workers";
 import { desc } from "drizzle-orm";
 import { getDb } from ".";
 import { mealEntries, nutritionTargets } from "./schema";
+import { normalizeConfidence } from "../lib/calorie-uncertainty";
 
 export type MealEntry = {
   id: number | string;
@@ -98,7 +99,7 @@ function normalizeEntry(entry: MealEntry, index: number): MealEntry | null {
     fiber: numeric(entry.fiber),
     salt: numeric(entry.salt),
     source: String(entry.source ?? "Google Sheet"),
-    confidence: String(entry.confidence ?? "中"),
+    confidence: normalizeConfidence(entry.confidence),
     notes: String(entry.notes ?? ""),
     recordedAt: String(entry.recordedAt ?? entry.entryDate),
   };
