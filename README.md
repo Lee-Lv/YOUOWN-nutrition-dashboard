@@ -35,12 +35,24 @@ Apple Health export ── optional POST ───────► Apps Script br
                                              YOUOWN Nutrition Dashboard
 ```
 
-### Quick start
+### AI-assisted installation (recommended)
+
+Clone this repository, open it in Codex, and say:
+
+> Install YOUOWN for me.
+
+The agent reads [AGENTS.md](AGENTS.md), checks the current state, creates only the missing local configuration, and verifies the complete local Dashboard → Apps Script → Google Sheet path. It reuses a prior installation rather than creating duplicate Sheets or Script projects.
+
+You only need to approve Google OAuth and the Google pages that intentionally remain interactive: Script Properties and Web App access/deployment settings. You should never need to hand-copy code, IDs, or tokens. See [AI installation](docs/AI_INSTALL.md) for the orchestration contract, [Google setup boundary](docs/GOOGLE_SETUP.md) for the explicit browser fallback, and [troubleshooting](docs/TROUBLESHOOTING.md) for repair.
+
+For an advanced/manual setup, use the steps below.
+
+### Manual setup
 
 #### 1. Create the Apps Script bridge
 
 1. In the Google Sheet, choose **Extensions → Apps Script**.
-2. Copy [`apps-script/Code.gs`](apps-script/Code.gs) into the editor.
+2. Copy [`apps-script/Code.gs`](apps-script/Code.gs), [`apps-script/Schema.gs`](apps-script/Schema.gs), and [`apps-script/appsscript.json`](apps-script/appsscript.json) into the editor/project.
 3. In **Project Settings → Script properties**, add:
 
    | Property | Value |
@@ -125,7 +137,9 @@ Verify current product capabilities, limits, and terms before relying on this co
 | `components/` | Cards, charts, animated meters, meal accordion, and background effects. |
 | `db/dashboard.ts` | Validates and normalizes the Apps Script payload. |
 | `lib/` | Forecasting, calorie uncertainty, and localization. |
-| `apps-script/Code.gs` | Google Apps Script bridge template. Copy it into your Apps Script project. |
+| `apps-script/` | Google Apps Script bridge template: `Code.gs`, generated `Schema.gs`, and the project manifest. |
+| `scripts/` | Repeatable local installer, doctor, clasp setup, local build, and end-to-end verifier. |
+| `config/sheet-schema.json` | Declarative schema used by the installer and generated Apps Script schema. |
 | `tests/` | Forecast, uncertainty, and meal-detail checks. |
 
 ### What the Sheet needs to look like
@@ -155,6 +169,15 @@ npm exec vite build
 node --test tests/meal-accordion.test.mjs tests/calorie-uncertainty.test.mjs tests/calorie-forecast.test.mjs
 ```
 
+### Installer checks
+
+```bash
+npm run doctor -- --json
+npm run install:ai
+```
+
+Installer state, OAuth state, and generated secrets live under ignored `.youown/`. The state file records only IDs and token fingerprints; the actual tokens are never committed. `npm run verify` initializes missing Sheet tabs/headers without overwriting existing values, performs an authenticated disposable round trip, removes its own test row, and builds the local Dashboard.
+
 ### Where this can go next
 
 The backing store does not have to be Google Sheets, and the assistant does not have to be ChatGPT. Any authorized combination works if it can safely update structured data and the app can read it:
@@ -175,7 +198,7 @@ Do not automate account logins or scrape private services unless explicitly perm
 
 ### Version
 
-`v1.0.0` is the first release of the open-source template. It ships without personal credentials or health data.
+`v1.1.0` adds the first agent-installable local path: state-aware diagnosis, repeatable local secrets, Sheet/App Script reuse, local clasp isolation, explicit Google browser fallback, and an end-to-end verifier. It ships without personal credentials or health data.
 
 ### License
 

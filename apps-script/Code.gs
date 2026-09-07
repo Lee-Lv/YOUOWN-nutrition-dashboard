@@ -36,6 +36,7 @@ function doGet(e) {
   try {
     requireToken(e, "READ_TOKEN", "token");
     const spreadsheet = openSpreadsheet();
+    if (String((e && e.parameter && e.parameter.setup) || "") === "1") ensureWorkbookSchema(spreadsheet);
     const mealSheet = spreadsheet.getSheetByName(DEFAULTS.logSheet);
     if (!mealSheet) throw new Error("Missing sheet: " + DEFAULTS.logSheet);
 
@@ -58,7 +59,9 @@ function doPost(e) {
     // apps cannot reliably send custom headers to Apps Script web apps.
     requireToken(e, "WRITE_TOKEN", "writeKey");
     const body = e && e.postData && e.postData.contents ? e.postData.contents : "{}";
-    const records = extractHealthRecords(JSON.parse(body));
+    const payload = JSON.parse(body);
+    if (payload && payload.youownInstaller) return json(runInstallerProbe(payload.youownInstaller));
+    const records = extractHealthRecords(payload);
     const result = appendHealthRecords(records);
     return json({
       ok: true,
@@ -75,6 +78,43 @@ function doPost(e) {
 function openSpreadsheet() {
   const id = requiredProperty("SPREADSHEET_ID");
   return SpreadsheetApp.openById(id);
+}
+
+function ensureWorkbookSchema(spreadsheet) {
+  if (typeof INSTALL_SCHEMA === "undefined" || !INSTALL_SCHEMA.sheets) {
+    throw new Error("Missing Schema.gs. Push both Code.gs and Schema.gs.");
+  }
+  Object.keys(INSTALL_SCHEMA.sheets).forEach(function (name) {
+    const definition = INSTALL_SCHEMA.sheets[name];
+    let sheet = spreadsheet.getSheetByName(name);
+    if (!sheet) sheet = spreadsheet.insertSheet(name);
+    if (definition.headers) ensureSheetHeaders(sheet, definition.headers);
+    if (definition.rows) ensureSettingsRows(sheet, definition.rows);
+  });
+}
+
+function ensureSheetHeaders(sheet, headers) {
+  if (sheet.getLastRow() === 0) {
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    sheet.setFrozenRows(1);
+    return;
+  }
+  const existing = sheet.getRange(1, 1, 1, Math.max(1, sheet.getLastColumn())).getDisplayValues()[0];
+  const missing = headers.filter(function (header) { return existing.indexOf(header) === -1; });
+  if (missing.length) sheet.getRange(1, existing.length + 1, 1, missing.length).setValues([missing]);
+  sheet.setFrozenRows(1);
+}
+
+function ensureSettingsRows(sheet, rows) {
+  const requiredRows = rows.length;
+  if (sheet.getMaxRows() < requiredRows) sheet.insertRowsAfter(sheet.getMaxRows(), requiredRows - sheet.getMaxRows());
+  const existing = sheet.getRange(1, 1, requiredRows, 2).getValues();
+  const writes = existing.map(function (row, index) {
+    const desired = rows[index];
+    return [row[0] || desired[0], row[1] === "" || row[1] === null ? desired[1] : row[1]];
+  });
+  sheet.getRange(1, 1, requiredRows, 2).setValues(writes);
+  sheet.setFrozenRows(1);
 }
 
 function requireToken(e, propertyName, parameterName) {
@@ -215,9 +255,13 @@ function extractHealthRecords(payload) {
 function appendHealthRecords(records) {
   const spreadsheet = openSpreadsheet();
   let sheet = spreadsheet.getSheetByName(DEFAULTS.weightSheet);
-  const headers = ["日期", "时间", "体重 kg", "体脂 %", "腰围 cm", "来源", "原始时间戳", "去重键", "更新时间"];
   if (!sheet) sheet = spreadsheet.insertSheet(DEFAULTS.weightSheet);
-  if (sheet.getLastRow() === 0) sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  // Schema.gs is required by the installer, but retain a safe fallback for
+  // existing manual deployments that previously copied Code.gs by itself.
+  const headers = typeof INSTALL_SCHEMA !== "undefined" && INSTALL_SCHEMA.sheets && INSTALL_SCHEMA.sheets[DEFAULTS.weightSheet]
+    ? INSTALL_SCHEMA.sheets[DEFAULTS.weightSheet].headers
+    : ["日期", "时间", "体重 kg", "体脂 %", "腰围 cm", "来源", "原始时间戳", "去重键", "更新时间"];
+  ensureSheetHeaders(sheet, headers);
 
   const existing = sheet.getDataRange().getDisplayValues().slice(1).map(function (row) { return row[7]; });
   const seen = existing.reduce(function (set, key) { if (key) set[key] = true; return set; }, {});
@@ -243,6 +287,43 @@ function appendHealthRecords(records) {
   });
   if (rows.length) sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, headers.length).setValues(rows);
   return { inserted: rows.length, skipped: records.length - rows.length };
+}
+
+function runInstallerProbe(request) {
+  const action = String(request.action || "");
+  const probeId = String(request.probeId || "").trim();
+  if (!/^youown-install-[a-zA-Z0-9_-]{8,80}$/.test(probeId)) throw new Error("Invalid installer probe ID");
+  const spreadsheet = openSpreadsheet();
+  ensureWorkbookSchema(spreadsheet);
+  const sheet = spreadsheet.getSheetByName(DEFAULTS.weightSheet);
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getDisplayValues()[0];
+  const columns = columnMap(headers);
+  const keyColumn = columns[normalizeHeader("去重键")];
+  if (keyColumn === undefined) throw new Error("Missing installer probe key column");
+
+  if (action === "append") {
+    const now = new Date();
+    const row = new Array(headers.length).fill("");
+    row[columns[normalizeHeader("日期")]] = Utilities.formatDate(now, DEFAULTS.timeZone, "yyyy-MM-dd");
+    row[columns[normalizeHeader("时间")]] = Utilities.formatDate(now, DEFAULTS.timeZone, "HH:mm:ss");
+    row[columns[normalizeHeader("体重 kg")]] = 1;
+    row[columns[normalizeHeader("来源")]] = "YOUOWN_INSTALL_TEST:" + probeId;
+    row[columns[normalizeHeader("原始时间戳")]] = now.toISOString();
+    row[keyColumn] = probeId;
+    row[columns[normalizeHeader("更新时间")]] = now.toISOString();
+    sheet.appendRow(row);
+    return { ok: true, action: "append", probeId: probeId };
+  }
+
+  if (action === "remove") {
+    const values = sheet.getDataRange().getDisplayValues();
+    for (let row = values.length - 1; row >= 1; row -= 1) {
+      if (values[row][keyColumn] === probeId) sheet.deleteRow(row + 1);
+    }
+    return { ok: true, action: "remove", probeId: probeId };
+  }
+
+  throw new Error("Unsupported installer probe action");
 }
 
 function columnMap(headers) {

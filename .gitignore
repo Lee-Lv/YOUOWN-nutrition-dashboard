@@ -40,3 +40,6 @@ next-env.d.ts
 /.sites-runtime/
 /outputs/
 /work/
+
+# Local YOUOWN installer state, OAuth session, and generated credentials.
+/.youown/

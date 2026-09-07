@@ -35,12 +35,24 @@ Apple Health 导出 ── 可选 POST ─────────► Apps Scrip
                                           YOUOWN Nutrition Dashboard
 ```
 
-### 快速开始
+### AI 协助安装（推荐）
+
+Clone 这个仓库后，用 Codex 打开它，然后只要说：
+
+> Install YOUOWN for me.
+
+Agent 会读取 [AGENTS.md](AGENTS.md)，先检查当前状态，只补齐缺的本地配置，并验证本地 Dashboard → Apps Script → Google Sheet 整条链路。已经存在、能工作的 Sheet 或 Script 会被复用，不会再给你生成 `Nutrition Sheet (2)` 这种东西。
+
+你只需要确认 Google OAuth，以及 Google 故意保留为交互式的两步：Script Properties 和 Web App 的访问/部署设置。代码、ID 和 Token 不应该再让你手动抄来抄去。完整约定看 [AI 安装说明](docs/AI_INSTALL.md)、[Google 设置边界](docs/GOOGLE_SETUP.md) 和 [排错说明](docs/TROUBLESHOOTING.md)。
+
+下面保留给高级用户的手动配置方式。
+
+### 手动配置
 
 #### 1. 创建 Google Apps Script 桥接
 
 1. 在 Google Sheet 中选择 **扩展程序 → Apps Script**。
-2. 将 [`apps-script/Code.gs`](apps-script/Code.gs) 复制进 Apps Script 编辑器。
+2. 将 [`apps-script/Code.gs`](apps-script/Code.gs)、[`apps-script/Schema.gs`](apps-script/Schema.gs) 和 [`apps-script/appsscript.json`](apps-script/appsscript.json) 一起复制进 Apps Script 项目。
 3. 在 **项目设置 → 脚本属性（Script properties）** 中添加：
 
    | 属性名 | 填写内容 |
@@ -129,7 +141,9 @@ Dashboard 故意只负责看数据：记录和修正发生在对话里，经过�
 | `components/` | 卡片、图表、动态进度条、饮食明细与背景效果。 |
 | `db/dashboard.ts` | 校验并规范化 Apps Script 返回的数据。 |
 | `lib/` | 热量预测、估算误差和多语言逻辑。 |
-| `apps-script/Code.gs` | Google Apps Script 桥接模板；复制到 Apps Script 项目中。 |
+| `apps-script/` | Google Apps Script 桥接模板：`Code.gs`、生成的 `Schema.gs` 和项目 manifest。 |
+| `scripts/` | 可重复执行的本地安装、诊断、clasp 配置、构建和全链路验证。 |
+| `config/sheet-schema.json` | 安装器与 Apps Script 共用的声明式 Sheet schema。 |
 | `tests/` | 预测、误差和饮食明细测试。 |
 
 ### Sheet 里需要哪些字段
@@ -159,6 +173,15 @@ npm exec vite build
 node --test tests/meal-accordion.test.mjs tests/calorie-uncertainty.test.mjs tests/calorie-forecast.test.mjs
 ```
 
+### 安装器检查
+
+```bash
+npm run doctor -- --json
+npm run install:ai
+```
+
+安装状态、OAuth 状态和自动生成的密钥都在被 Git 忽略的 `.youown/` 里。状态文件只保存 ID 和 Token 指纹，真正的 Token 不会提交。`npm run verify` 会补齐缺少的 Sheet tab/表头但不会覆盖已有内容；随后写入一条一次性测试记录、确认读取链路、清理它自己写的记录，并构建本地 Dashboard。
+
 ### 以后还能怎么扩展
 
 数据源不一定非要是 Google Sheet，AI 也不一定非要是 ChatGPT。只要某个系统能安全更新结构化数据，而应用可以读取它，下面的组合都成立：
@@ -179,7 +202,7 @@ node --test tests/meal-accordion.test.mjs tests/calorie-uncertainty.test.mjs tes
 
 ### 版本
 
-`v1.0.0` 是这个开源模板的首个发布版本；不包含任何个人凭据或健康数据。
+`v1.1.0` 加入第一版 Agent-installable 本地路径：状态诊断、可重复的本地密钥、Sheet / Apps Script 复用、隔离的本地 clasp、明确的 Google 浏览器回退，以及全链路验证；不包含任何个人凭据或健康数据。
 
 ### License
 
