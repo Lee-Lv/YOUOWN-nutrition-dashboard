@@ -144,7 +144,7 @@ npm run doctor -- --json
 npm run install:ai
 ```
 
-安装状态、OAuth 状态和自动生成的密钥都在被 Git 忽略的 `.youown/` 里。状态文件只保存 ID 和 Token 指纹，真正的 Token 不会提交。`npm run verify` 会补齐缺少的 Sheet tab/表头但不会覆盖已有内容；随后写入一条一次性测试记录、确认读取链路、清理它自己写的记录，并构建本地 Dashboard。
+安装状态、OAuth 状态和读取 Token 都在被 Git 忽略的 `.youown/` 里。状态文件只保存 ID 和 Token 指纹，真正的 Token 不会提交。`npm run verify` 会补齐缺少的 Sheet tab/表头但不会覆盖已有内容；随后进行一次鉴权读取检查，并构建本地 Dashboard。
 
 ### 以后还能怎么扩展
 

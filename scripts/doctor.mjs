@@ -52,7 +52,7 @@ const result = {
   clasp: { status: claspInstalled ? "ok" : "missing", detail: claspInstalled ? undefined : "Run npm run bootstrap to install project dependencies." },
   googleAuth: { status: googleAuth },
   installerState: { status: (await pathExists(statePath(args))) ? "ok" : "missing" },
-  localSecrets: { status: (await pathExists(secretsPath(args))) && secrets.READ_TOKEN && secrets.WRITE_TOKEN ? "ok" : "missing" },
+  localSecrets: { status: (await pathExists(secretsPath(args))) && secrets.READ_TOKEN ? "ok" : "missing" },
   sheet: { status: state.sheetId ? "configured" : "missing" },
   appsScript: { status: state.appsScriptId ? "configured" : "missing" },
   deployment: { status: state.deploymentId ? "configured" : "missing" },

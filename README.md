@@ -140,7 +140,7 @@ npm run doctor -- --json
 npm run install:ai
 ```
 
-Installer state, OAuth state, and generated secrets live under ignored `.youown/`. The state file records only IDs and token fingerprints; the actual tokens are never committed. `npm run verify` initializes missing Sheet tabs/headers without overwriting existing values, performs an authenticated disposable round trip, removes its own test row, and builds the local Dashboard.
+Installer state, OAuth state, and the read token live under ignored `.youown/`. The state file records only IDs and token fingerprints; the token is never committed. `npm run verify` initializes missing Sheet tabs/headers without overwriting existing values, performs an authenticated read check, and builds the local Dashboard.
 
 ### Where this can go next
 

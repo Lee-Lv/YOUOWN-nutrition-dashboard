@@ -44,7 +44,7 @@ if (!state.sheetId) {
       status: endpoint ? "configured" : "required",
       detail: endpoint
         ? "Endpoint saved locally; run npm run verify to initialize and test the chain."
-        : "In Apps Script, set SPREADSHEET_ID, READ_TOKEN and WRITE_TOKEN in Script Properties; deploy a Web app, then rerun with --endpoint EXEC_URL [--deployment-id ID].",
+        : "In Apps Script, set SPREADSHEET_ID and READ_TOKEN in Script Properties; deploy a Web app, then rerun with --endpoint EXEC_URL [--deployment-id ID].",
     },
   }, args);
 }

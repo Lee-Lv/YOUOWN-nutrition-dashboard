@@ -31,6 +31,7 @@ test("bootstrap is repeatable and stores no plaintext token in state", async () 
     const stateBefore = JSON.parse(await readFile(join(stateDir, "state.json"), "utf8"));
     const secrets = await readFile(join(stateDir, "secrets.env"), "utf8");
     assert.match(secrets, /^READ_TOKEN=.+/m);
+    assert.ok(!/^WRITE_TOKEN=/m.test(secrets));
     assert.ok(!JSON.stringify(stateBefore).includes("READ_TOKEN"));
 
     const bind = await invoke("sheet-setup.mjs", ["--sheet-id", "abcdefghijklmnopqrstuvwxyz0123456789"], stateDir);

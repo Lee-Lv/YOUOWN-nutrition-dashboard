@@ -40,7 +40,7 @@ Then deploy the Web App as the Sheet owner with the narrowest access setting tha
 - **Apps Script exists but the local `.clasp.json` is absent:** record/reuse its script ID in `.youown/state.json`; do not create another project.
 - **Endpoint becomes unhealthy:** run doctor with `--network`, repair only the failed Script Property/deployment setting, then rerun verify.
 - **Authorization is missing:** run `google:auth`; wait for the official OAuth completion instead of asking the user to report back.
-- **Verification fails:** the disposable `YOUOWN_INSTALL_TEST` row must be removed before reporting the failure. Fix the failed link, then rerun verification.
+- **Verification fails:** keep the existing Sheet data untouched, fix the failed read link, then rerun verification.
 
 ## Scope
 

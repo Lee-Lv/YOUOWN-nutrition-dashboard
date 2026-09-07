@@ -22,7 +22,6 @@ const secrets = await loadSecrets(args);
 const nextSecrets = {
   ...secrets,
   READ_TOKEN: secrets.READ_TOKEN || randomToken(),
-  WRITE_TOKEN: secrets.WRITE_TOKEN || randomToken(),
 };
 
 if (!dryRun) {
@@ -34,7 +33,6 @@ if (!dryRun) {
   await saveState({
     ...state,
     readTokenFingerprint: tokenFingerprint(nextSecrets.READ_TOKEN),
-    writeTokenFingerprint: tokenFingerprint(nextSecrets.WRITE_TOKEN),
   }, args);
 
   if (!args["skip-install"] && !existsSync(join(ROOT, "node_modules"))) {
