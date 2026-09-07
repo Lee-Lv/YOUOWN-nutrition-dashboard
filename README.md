@@ -28,8 +28,8 @@ AI-first personal nutrition tracking with ChatGPT and your own Google Sheets.
 
 ```text
 ChatGPT / another AI ── authorized update ──► Google Sheet
-                                                meals / targets / weights
-Apple Health export ── optional POST ───────► Apps Script bridge
+                                                meals / targets
+                                                    │ Apps Script bridge
                                                         │ authenticated JSON
                                                         ▼
                                              YOUOWN Nutrition Dashboard
@@ -123,7 +123,7 @@ The bridge recognizes common Chinese and English header aliases. The important `
 | Stable ID | `entry_id` | Cross-system identity |
 | Status | `记录状态` | Deleted rows are ignored |
 
-`设置` uses column B: `B2:B7` for calorie/protein/fat/carbs/fiber/salt targets. `B16:B20` are optional metabolic metrics. `体重` is optional and supports date, time, weight (kg), body fat (%), source, raw timestamp, and a deduplication key.
+`设置` uses column B: `B2:B7` for calorie/protein/fat/carbs/fiber/salt targets. `B16:B19` are optional metabolic metrics.
 
 ### Local checks
 
@@ -155,10 +155,9 @@ Do not automate account logins or scrape private services unless explicitly perm
 ### Public-repository checklist
 
 - This repository is safe to publish only as a template: it contains no real Sheet ID, Apps Script URL, token, health record, or exported log.
-- Never commit Sheet IDs, read/write tokens, health records, or exported logs.
-- Use separate read and write tokens; rotate either one after accidental disclosure.
+- Never commit Sheet IDs, read tokens, health records, or exported logs.
 - Restrict Apps Script deployment access and use only systems/accounts you are authorized to automate.
-- Do not put credentials in an AI chat prompt, an issue, a screenshot, or a public deployment setting. Treat the Apps Script write URL as a secret too.
+- Do not put credentials in an AI chat prompt, an issue, a screenshot, or a public deployment setting.
 
 ### Version
 

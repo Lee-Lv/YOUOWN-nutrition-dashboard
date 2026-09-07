@@ -14,7 +14,6 @@
    | --- | --- |
    | `SPREADSHEET_ID` | Google Sheet URL 中的 ID。 |
    | `READ_TOKEN` | 供 Dashboard 读取的一段长随机密钥。 |
-   | `WRITE_TOKEN` | 启用健康数据 POST 时填写另一段不同的长随机密钥。 |
 
 4. 部署为 **Web app**，执行身份选择 Sheet 所有者，访问范围使用能正常工作的最小范围。
 5. 用 `/exec?token=YOUR_READ_TOKEN` 测试；正常时应返回含 `ok: true` 的 JSON。
@@ -30,10 +29,6 @@ GOOGLE_SHEET_TOKEN=YOUR_READ_TOKEN
 
 不要提交这些值。仓库里的脚本不包含真实 ID 或 Token。
 
-## 3. 可选：Apple Health 导出
-
-将导出地址设为 `/exec?writeKey=YOUR_WRITE_TOKEN`，发送包含时间戳、体重/身体质量类型、数值及可选单位的 JSON。模板识别 kg、lb，以及小数或百分比形式的体脂。完整的写入 URL 应视作秘密；如果泄露，请轮换 `WRITE_TOKEN`。
-
-## 4. GPT Chat Prompt 设置
+## 3. GPT Chat Prompt 设置
 
 安装器不会替用户创建或修改 GPT。数据桥接准备好以后，你仍然需要在自己的 GPT 或 Chat 工作流中，加入 [`docs/gpt-chat-prompt.zh-CN.md`](gpt-chat-prompt.zh-CN.md) 里的可复用说明；英文版在 [这里](gpt-chat-prompt.md)。Chat 是输入入口，Dashboard 负责只读查看。

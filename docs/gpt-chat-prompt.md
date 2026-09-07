@@ -8,7 +8,7 @@ This dashboard is intentionally not a data-entry app. The chat is the input surf
 
 Connect the assistant to **your own** Google Sheet using a supported, authorized integration. Confirm the assistant can read and update that Sheet before asking it to save anything. Product availability, permissions, limits, and costs depend on the AI product and account you use.
 
-Never put `READ_TOKEN`, `WRITE_TOKEN`, an Apps Script write URL, or other credentials into this prompt. The assistant only needs access to the Sheet through an authorized connector or tool.
+Never put a token, Apps Script URL, or other credentials into this prompt. The assistant only needs access to the Sheet through an authorized connector or tool.
 
 ## Copy-and-adapt prompt
 
@@ -28,7 +28,7 @@ For every meal or correction:
 5. Save only after I say to save, unless I explicitly say that this conversation may save routine entries without confirmation.
 6. For corrections, find the existing row first. Update that row rather than creating a duplicate. For deletions, ask for clear confirmation and then use the Sheet's existing deletion/status convention.
 7. Never change nutrition targets, settings, formulas, historical rows, or unrelated tabs unless I explicitly request it.
-8. Never expose, copy, or ask me to paste API keys, Apps Script URLs with write keys, tokens, or private health data outside this authorized Sheet workflow.
+8. Never expose, copy, or ask me to paste API keys, tokens, or private health data outside this authorized Sheet workflow.
 
 Reply in the language I use. Be concise, practical, and clear about uncertainty.
 ```

@@ -25,12 +25,11 @@ npm run apps-script:setup -- --endpoint EXEC_URL --deployment-id DEPLOYMENT_ID
 npm run verify
 ```
 
-The browser fallback must set three Apps Script Script Properties using local secret values without exposing them to chat output:
+The browser fallback must set the two Apps Script Script Properties below using local values without exposing them to chat output:
 
 ```text
 SPREADSHEET_ID = selected Sheet ID
 READ_TOKEN     = .youown/secrets.env READ_TOKEN
-WRITE_TOKEN    = .youown/secrets.env WRITE_TOKEN
 ```
 
 Then deploy the Web App as the Sheet owner with the narrowest access setting that still permits the configured dashboard to read it. Resume with its `/exec` URL and run verification.

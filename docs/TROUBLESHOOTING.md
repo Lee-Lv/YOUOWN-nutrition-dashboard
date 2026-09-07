@@ -6,7 +6,7 @@ Run `npm run google:auth`. It uses project-local clasp state in `.youown/` and s
 
 ## Apps Script push succeeds but verify is unauthorized
 
-Check that `SPREADSHEET_ID`, `READ_TOKEN`, and `WRITE_TOKEN` are Script Properties—not code constants—and that they match `.youown/secrets.env`. Do not paste their values into an issue or chat.
+Check that `SPREADSHEET_ID` and `READ_TOKEN` are Script Properties—not code constants—and that the read token matches `.youown/secrets.env`. Do not paste the value into an issue or chat.
 
 ## Endpoint is unhealthy
 

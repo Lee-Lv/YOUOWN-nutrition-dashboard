@@ -28,8 +28,8 @@
 
 ```text
 ChatGPT / 其他 AI ── 已授权的数据更新 ──► Google Sheet
-                                           饮食 / 目标 / 体重
-Apple Health 导出 ── 可选 POST ─────────► Apps Script 桥接
+                                           饮食 / 目标
+                                               │ Apps Script 桥接
                                                     │ 带鉴权 JSON
                                                     ▼
                                           YOUOWN Nutrition Dashboard
@@ -127,7 +127,7 @@ Dashboard 故意只负责看数据：记录和修正发生在对话里，经过�
 | 稳定 ID | `entry_id` | 跨系统识别 |
 | 状态 | `记录状态` | 标为删除的行不会显示 |
 
-`设置` 使用 B 列：`B2:B7` 是热量/蛋白质/脂肪/碳水/纤维/盐分目标；`B16:B20` 可存放代谢相关可选指标。`体重` 表是可选的，支持日期、时间、体重 kg、体脂 %、来源、原始时间戳和去重键。
+`设置` 使用 B 列：`B2:B7` 是热量/蛋白质/脂肪/碳水/纤维/盐分目标；`B16:B19` 可存放代谢相关可选指标。
 
 ### 本地检查
 
@@ -159,10 +159,9 @@ npm run install:ai
 ### 公开仓库前的检查清单
 
 - 这个仓库只能以“模板”的形式公开：其中不包含真实 Sheet ID、Apps Script 地址、Token、健康记录或导出日志。
-- 不要提交 Sheet ID、读写 Token、健康记录或导出日志。
-- 读取和写入使用不同 Token；任一泄露后立即轮换。
+- 不要提交 Sheet ID、读取 Token、健康记录或导出日志。
 - 收紧 Apps Script 的部署访问范围，并只自动化你有权限操作的系统和账户。
-- 不要把凭据写进 AI 对话 Prompt、GitHub Issue、截图或公开的部署配置里；Apps Script 的写入 URL 也应视作秘密。
+- 不要把凭据写进 AI 对话 Prompt、GitHub Issue、截图或公开的部署配置中。
 
 ### 版本
 

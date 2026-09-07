@@ -14,7 +14,6 @@ This is the fallback for users who do not want to use Codex for installation. Th
    | --- | --- |
    | `SPREADSHEET_ID` | The ID from the Google Sheet URL. |
    | `READ_TOKEN` | A long random secret for dashboard reads. |
-   | `WRITE_TOKEN` | A different long random secret if health-export POST is enabled. |
 
 4. Deploy as a **Web app**, running as the Sheet owner, with the narrowest access setting that works for the Dashboard.
 5. Test `/exec?token=YOUR_READ_TOKEN`; it should return JSON with `ok: true`.
@@ -30,10 +29,6 @@ GOOGLE_SHEET_TOKEN=YOUR_READ_TOKEN
 
 Never commit these values. The repository's committed script contains no real IDs or tokens.
 
-## 3. Optional Apple Health export
-
-Point the exporter at `/exec?writeKey=YOUR_WRITE_TOKEN` and send JSON containing a timestamp, weight/body-mass type, value, and optional unit. The bridge recognizes kg/lb and fractional or percentage body-fat values. Treat the full write URL as a secret and rotate `WRITE_TOKEN` if it leaks.
-
-## 4. ChatGPT Prompt setup
+## 3. ChatGPT Prompt setup
 
 The installer does not create or modify a user's GPT. After the data bridge is ready, create or open your own GPT/chat workflow and add the reusable instructions from [`docs/gpt-chat-prompt.md`](gpt-chat-prompt.md), or the [Chinese version](gpt-chat-prompt.zh-CN.md). Chat is the input surface; the Dashboard is the read-only review surface.
