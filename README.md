@@ -1,6 +1,8 @@
-# Nutrition Dashboard
+# YOUOWN Nutrition Dashboard
 
-> An open-source, self-hosted nutrition dashboard built around **your own Google Sheet**.
+> **Don't build another AI app. Let the AI you already use write to data you already own.**
+
+AI-first personal nutrition tracking with ChatGPT and your own Google Sheets.
 
 **Language:** [中文 README](README.zh-CN.md)
 
@@ -8,145 +10,32 @@
 
 ## English
 
-### Why this exists
-
-I made this because I kept looking at paid health apps and thinking: I am paying for all of this, but I still do not get quite the workflow I want. Some features are things I never use, and the AI recognition is often nowhere near as useful to me as the GPT subscription I already have. This project keeps the data in a Google Sheet I control and turns that data into a private web dashboard.
-
-I also did not want to spend weeks making a native app just to get a personal tool working. A web app is enough for this. Nutrition is just the first use case; the same idea works for trackers, household logs, training journals, collections, and small CRM tools.
-
-### Project positioning
-
-**A conversational, spreadsheet-backed personal dashboard template.**
-
-Nutrition is the first example. The same pattern can support household logs, training records, medication notes, collections, personal finance, or a small CRM: use an AI conversation to update structured data, then use a focused web dashboard to understand it.
-
-### What it does
-
-- Reads meal logs, nutrition targets, and optional weight records from Google Sheets.
-- Shows calories, macros, fiber, salt, estimate ranges, alerts, trends, and expandable meal details.
-- Forecasts the next seven days using the history already in the Sheet.
-- Has English and Chinese UI, with the choice saved in the browser.
-- Uses a private Google Apps Script JSON bridge instead of making the Sheet public.
-- Can optionally accept Apple Health / Health Auto Export measurements.
-- Keeps the code and data model open, so I can ask an AI coding assistant to change the project when I want.
-
-### The GPT Chat prompt and workflow rules
-
-The dashboard is deliberately read-only: logging and corrections happen in a chat, then the approved data lands in the Sheet. The reusable prompt, a proposed response format, and the rules for safe Sheet edits live in [the GPT Chat workflow guide](docs/gpt-chat-prompt.md). A Chinese version is available [here](docs/gpt-chat-prompt.zh-CN.md).
-
-This is an important part of the project, not an afterthought: the interface is meant to be the calm place where you review your day; chat is the flexible place where you describe, correct, and approve data.
-
-### The idea and some UI examples
-
-The dashboard is intentionally simple. It is mainly for looking at the data, not entering it. There are no meal, calorie, or health-input forms here. I describe or correct something in an AI conversation, the authorized workflow updates the Sheet, and this page shows the result.
-
-When everything is normal, the page stays quiet and readable. The uncertainty band says “this is an estimate”, and the green focus card gives a small suggestion without getting in the way.
-
 ![Normal dashboard state](docs/images/dashboard-normal-top.jpg)
 
-*Normal state: daily calorie progress, estimate range, today’s focus, and the three macro cards.*
-
-### Chat workflow examples
-
-The input side is intentionally conversational. I can tell GPT what I ate in one sentence, review the estimated nutrients, and let the authorized workflow update my Sheet.
+*Your day at a glance: calorie progress, estimate range, today’s focus, and macro cards.*
 
 ![Chat meal logging example](docs/images/chat-meal-log.jpg)
 
-*Chat example: a natural-language meal note becomes a calorie and nutrient summary.*
+*Chat input: one natural-language meal note becomes a reviewable calorie and nutrient summary.*
 
-The assistant can use an authorized Google Drive / Google Sheets connection to work with the data source. The exact connector options depend on the account and product being used.
+### Three things that make it different
 
-![Google Drive connection example](docs/images/chat-google-drive.jpg)
+- **Chat is the input.** Tell the AI what you ate, review the estimate, and approve the update instead of filling in another form.
+- **Your Sheet is the database.** Data stays inspectable, editable, exportable, and under your control.
+- **The Dashboard stays focused.** It turns the Sheet into progress, uncertainty, alerts, forecasts, and details without becoming a second database.
 
-*Connection example: Google Drive is selected as the place where the personal data lives.*
-
-The lower section stays compact. The chart shows actual and forecast values, records are grouped by day, and each meal opens when I want to see the details.
-
-![Trend and recent records](docs/images/dashboard-normal-lower.jpg)
-
-*History/forecast trend, daily navigation, expandable recent records, and the language selector.*
-
-When something goes over the limit, the page becomes more direct: it says what went over, how much it went over by, and shows the 100% line plus the 120% warning zone.
-
-![Over-target alert state](docs/images/dashboard-over-alert.jpg)
-
-*Over-target state: the warning card and macro meters make the amount over target explicit.*
-
-These are examples of the interface. The Sheet is still the source of truth. This page is here to make the data easier to understand, not to become a second database.
-
-### Why I think this is worth doing
+### Architecture
 
 ```text
-Chat with an AI → review/correct a meal estimate → update your Sheet → refresh dashboard
-                                                          │
-Apple Health export ─────────────────────────────────────┘
-                                                          ↓
-                                              Your private web dashboard
+ChatGPT / another AI ── authorized update ──► Google Sheet
+                                                meals / targets / weights
+Apple Health export ── optional POST ───────► Apps Script bridge
+                                                        │ authenticated JSON
+                                                        ▼
+                                             YOUOWN Nutrition Dashboard
 ```
 
-| Layer | Role | Why it is useful |
-| --- | --- | --- |
-| Google Sheet | Source of truth | Easy to inspect, edit, export, and own. |
-| AI chat workflow | Estimation and daily updates | Natural-language corrections are faster than forms for every edge case. |
-| Google Apps Script | Small read/write bridge | Connects Sheets to the dashboard and optional health exports. |
-| This web app | Presentation and interaction | Responsive dashboard, without a native-app release cycle. |
-| ChatGPT Sites or another host | Deployment | Makes a personal tool available as a web application. |
-
-### A quick note about cost and platforms
-
-The short version: I already pay for a GPT subscription, so I would rather use the AI tool I actually like for my own updates than pay another health app for features I do not need. But there is an important boundary here: this project does **not** make paid APIs universally free.
-
-- A ChatGPT subscription may include the chat, agent, connector, or web-app features available in that plan. If the everyday update happens inside ChatGPT, I may not need a separate API integration for that step.
-- A ChatGPT subscription is **not** the same thing as OpenAI API credits. OpenAI API calls, other AI providers, automation services, and connectors may cost extra and have separate limits.
-- Google Sheets and Apps Script have their own quotas and account requirements.
-- Verify current product capabilities and limits before relying on this cost model.
-
-So the benefit is pretty simple: if you already pay for an AI chat product and it can handle your personal workflow, you may not need another nutrition-recognition subscription or a custom paid AI pipeline. Check the current plan, limits, and terms before relying on it.
-
-### How the pieces fit together
-
-```text
-AI chat / assistant ── authorized update ──► Google Sheet
-                                              食事日志 / 设置 / 体重
-Apple Health export ── optional POST ──────► Google Apps Script bridge
-                                                       │ authenticated JSON
-                                                       ▼
-                                            your Nutrition Dashboard
-```
-
-The dashboard fetches the Apps Script `doGet()` endpoint server-side. If that bridge is unavailable, the app may fall back to its configured local cache/database layer.
-
-### Where things live
-
-| Path | Purpose |
-| --- | --- |
-| `app/` | Dashboard routes, layout, language, and theme controls. |
-| `components/` | Cards, charts, animated meters, meal accordion, and background effects. |
-| `db/dashboard.ts` | Validates and normalizes the Apps Script payload. |
-| `lib/` | Forecasting, calorie uncertainty, and localization. |
-| `apps-script/Code.gs` | Google Apps Script bridge template. Copy it into your Apps Script project. |
-| `tests/` | Forecast, uncertainty, and meal-detail checks. |
-
-### What the Sheet needs to look like
-
-The bridge recognizes common Chinese and English header aliases. The important `食事日志` fields are:
-
-| Field | Example header | Used for |
-| --- | --- | --- |
-| Date | `日期` | Daily grouping and trend chart |
-| Meal | `餐次` | Breakfast/lunch/dinner ordering |
-| Food name | `食物 / 菜名` | Recent log |
-| Serving | `整份描述` | Meal detail |
-| Ratio | `摄入比例` | Actual consumed amount |
-| Actual nutrients | `实际热量 kcal` … `实际盐分 g` | Totals and progress meters |
-| Confidence | `估算依据 / 可信度` | Uncertainty range |
-| Notes | `备注` | Expandable explanation |
-| Stable ID | `entry_id` | Cross-system identity |
-| Status | `记录状态` | Deleted rows are ignored |
-
-`设置` uses column B: `B2:B7` for calorie/protein/fat/carbs/fiber/salt targets. `B16:B20` are optional metabolic metrics. `体重` is optional and supports date, time, weight (kg), body fat (%), source, raw timestamp, and a deduplication key.
-
-### Getting it running
+### Quick start
 
 #### 1. Create the Apps Script bridge
 
@@ -179,6 +68,84 @@ Do not commit these values to `.env`, source files, screenshots, or prompts.
 Point the exporter at `/exec?writeKey=YOUR_WRITE_TOKEN` and send JSON with a timestamp, a weight/body-mass type, a value, and optionally a unit. The bridge recognizes kg/lb and fractional or percent body-fat values. Test a small range first.
 
 The query key exists because custom headers are not consistently forwarded by Apps Script web apps. Treat the full URL as a secret and rotate `WRITE_TOKEN` if it leaks.
+
+### Why this exists
+
+I made this because I kept looking at paid health apps and thinking: I am paying for all of this, but I still do not get quite the workflow I want. Some features are things I never use, and the AI recognition is often nowhere near as useful to me as the GPT subscription I already have. This project keeps the data in a Google Sheet I control and turns that data into a private web dashboard.
+
+I also did not want to spend weeks making a native app just to get a personal tool working. A web app is enough for this. Nutrition is just the first use case; the same idea works for trackers, household logs, training journals, collections, and small CRM tools.
+
+### Project positioning
+
+**A conversational, spreadsheet-backed personal dashboard template.**
+
+Nutrition is the first example. The same pattern can support household logs, training records, medication notes, collections, personal finance, or a small CRM: use an AI conversation to update structured data, then use a focused web dashboard to understand it.
+
+### Chat workflow and design rules
+
+The dashboard is deliberately read-only: logging and corrections happen in a chat, then the approved data lands in the Sheet. The reusable prompt, a proposed response format, and the rules for safe Sheet edits live in [the GPT Chat workflow guide](docs/gpt-chat-prompt.md). A Chinese version is available [here](docs/gpt-chat-prompt.zh-CN.md).
+
+The interface is meant to be the calm place where you review your day; chat is the flexible place where you describe, correct, and approve data.
+
+### More interface examples
+
+The assistant can use an authorized Google Drive / Google Sheets connection to work with the data source. The exact connector options depend on the account and product being used.
+
+![Google Drive connection example](docs/images/chat-google-drive.jpg)
+
+*Connection example: Google Drive is selected as the place where the personal data lives.*
+
+The lower section stays compact. The chart shows actual and forecast values, records are grouped by day, and each meal opens when I want to see the details.
+
+![Trend and recent records](docs/images/dashboard-normal-lower.jpg)
+
+*History/forecast trend, daily navigation, expandable recent records, and the language selector.*
+
+When something goes over the limit, the page becomes more direct: it says what went over, how much it went over by, and shows the 100% line plus the 120% warning zone.
+
+![Over-target alert state](docs/images/dashboard-over-alert.jpg)
+
+*Over-target state: the warning card and macro meters make the amount over target explicit.*
+
+### Cost and platform boundaries
+
+I already pay for a GPT subscription, so I would rather use the AI tool I actually like for my own updates than pay another health app for features I do not need. But this project does **not** make paid APIs universally free.
+
+- A ChatGPT subscription may include the chat, agent, connector, or web-app features available in that plan. If an everyday update happens inside ChatGPT, a separate API integration may not be necessary for that step.
+- A ChatGPT subscription is **not** the same thing as OpenAI API credits. OpenAI API calls, other AI providers, automation services, and connectors may cost extra and have separate limits.
+- Google Sheets and Apps Script have their own quotas and account requirements.
+
+Verify current product capabilities, limits, and terms before relying on this cost model.
+
+### Where things live
+
+| Path | Purpose |
+| --- | --- |
+| `app/` | Dashboard routes, layout, language, and theme controls. |
+| `components/` | Cards, charts, animated meters, meal accordion, and background effects. |
+| `db/dashboard.ts` | Validates and normalizes the Apps Script payload. |
+| `lib/` | Forecasting, calorie uncertainty, and localization. |
+| `apps-script/Code.gs` | Google Apps Script bridge template. Copy it into your Apps Script project. |
+| `tests/` | Forecast, uncertainty, and meal-detail checks. |
+
+### What the Sheet needs to look like
+
+The bridge recognizes common Chinese and English header aliases. The important `食事日志` fields are:
+
+| Field | Example header | Used for |
+| --- | --- | --- |
+| Date | `日期` | Daily grouping and trend chart |
+| Meal | `餐次` | Breakfast/lunch/dinner ordering |
+| Food name | `食物 / 菜名` | Recent log |
+| Serving | `整份描述` | Meal detail |
+| Ratio | `摄入比例` | Actual consumed amount |
+| Actual nutrients | `实际热量 kcal` … `实际盐分 g` | Totals and progress meters |
+| Confidence | `估算依据 / 可信度` | Uncertainty range |
+| Notes | `备注` | Expandable explanation |
+| Stable ID | `entry_id` | Cross-system identity |
+| Status | `记录状态` | Deleted rows are ignored |
+
+`设置` uses column B: `B2:B7` for calorie/protein/fat/carbs/fiber/salt targets. `B16:B20` are optional metabolic metrics. `体重` is optional and supports date, time, weight (kg), body fat (%), source, raw timestamp, and a deduplication key.
 
 ### Local checks
 
