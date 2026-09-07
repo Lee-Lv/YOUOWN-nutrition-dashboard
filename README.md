@@ -14,6 +14,12 @@ I made this because I kept looking at paid health apps and thinking: I am paying
 
 I also did not want to spend weeks making a native app just to get a personal tool working. A web app is enough for this. Nutrition is just the first use case; the same idea works for trackers, household logs, training journals, collections, and small CRM tools.
 
+### Project positioning
+
+**A conversational, spreadsheet-backed personal dashboard template.**
+
+Nutrition is the first example. The same pattern can support household logs, training records, medication notes, collections, personal finance, or a small CRM: use an AI conversation to update structured data, then use a focused web dashboard to understand it.
+
 ### What it does
 
 - Reads meal logs, nutrition targets, and optional weight records from Google Sheets.
