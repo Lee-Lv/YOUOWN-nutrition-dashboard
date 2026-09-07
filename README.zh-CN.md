@@ -37,49 +37,13 @@ Apple Health 导出 ── 可选 POST ─────────► Apps Scrip
 
 ### AI 协助安装（推荐）
 
-Clone 这个仓库后，用 Codex 打开它，然后只要说：
+用 Codex 打开项目，然后只要说：
 
-> Install YOUOWN for me.
+> 帮我装好 https://github.com/Lee-Lv/YOUOWN-nutrition-dashboard/tree/main
 
-Agent 会读取 [AGENTS.md](AGENTS.md)，先检查当前状态，只补齐缺的本地配置，并验证本地 Dashboard → Apps Script → Google Sheet 整条链路。已经存在、能工作的 Sheet 或 Script 会被复用，不会再给你生成 `Nutrition Sheet (2)` 这种东西。
+Agent 会先检查当前状态，复用已有资源，只补齐缺的配置，并验证 Dashboard → Apps Script → Google Sheet 整条链路。
 
-你只需要确认 Google OAuth，以及 Google 故意保留为交互式的两步：Script Properties 和 Web App 的访问/部署设置。代码、ID 和 Token 不应该再让你手动抄来抄去。完整约定看 [AI 安装说明](docs/AI_INSTALL.md)、[Google 设置边界](docs/GOOGLE_SETUP.md) 和 [排错说明](docs/TROUBLESHOOTING.md)。
-
-下面保留给高级用户的手动配置方式。
-
-### 手动配置
-
-#### 1. 创建 Google Apps Script 桥接
-
-1. 在 Google Sheet 中选择 **扩展程序 → Apps Script**。
-2. 将 [`apps-script/Code.gs`](apps-script/Code.gs)、[`apps-script/Schema.gs`](apps-script/Schema.gs) 和 [`apps-script/appsscript.json`](apps-script/appsscript.json) 一起复制进 Apps Script 项目。
-3. 在 **项目设置 → 脚本属性（Script properties）** 中添加：
-
-   | 属性名 | 填写内容 |
-   | --- | --- |
-   | `SPREADSHEET_ID` | Google Sheet URL 中的 ID。 |
-   | `READ_TOKEN` | 供 Dashboard 读取的一段长随机密钥。 |
-   | `WRITE_TOKEN` | 启用健康数据 POST 时填写另一段不同的长随机密钥。 |
-
-4. 部署为 **Web app**。执行身份选择 Sheet 所有者；访问范围尽量收紧。
-5. 用 `/exec?token=YOUR_READ_TOKEN` 测试；正常时应返回含 `ok: true` 的 JSON。
-
-> 仓库脚本不含任何真实 ID 或 Token。真实凭据只能保存在 Script Properties 和托管平台的秘密环境变量中，不能提交到 Git。
-
-#### 2. 配置 Dashboard 运行时
-
-| 变量 | 内容 |
-| --- | --- |
-| `GOOGLE_SHEET_ENDPOINT` | Apps Script Web app 的 `/exec` URL |
-| `GOOGLE_SHEET_TOKEN` | 与 `READ_TOKEN` 相同的值 |
-
-不要把这些值提交到 `.env`、代码、截图或公开聊天记录中。
-
-#### 3. 可选：Apple Health / Health Auto Export
-
-将导出地址设为 `/exec?writeKey=YOUR_WRITE_TOKEN`，发送包含时间戳、体重/身体质量类型、数值及可选单位的 JSON。模板识别 kg、lb，以及小数或百分比形式的体脂。先做小范围测试，再启用大范围历史导出。
-
-部分健康导出 App 无法稳定把自定义 Header 转发给 Apps Script Web app，因此模板支持 query 中的 `writeKey`。这会让 URL 本身成为秘密：不要分享它；一旦泄露，请立即轮换 `WRITE_TOKEN`。
+详细说明看 [AI 安装](docs/AI_INSTALL.md)、[手动安装](docs/MANUAL_SETUP.zh-CN.md) 或 [排错说明](docs/TROUBLESHOOTING.md)。
 
 ### 为什么做这个项目
 

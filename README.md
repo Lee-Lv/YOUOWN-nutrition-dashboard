@@ -37,49 +37,13 @@ Apple Health export ── optional POST ───────► Apps Script br
 
 ### AI-assisted installation (recommended)
 
-Clone this repository, open it in Codex, and say:
+Open Codex and say:
 
-> Install YOUOWN for me.
+> Install https://github.com/Lee-Lv/YOUOWN-nutrition-dashboard/tree/main for me.
 
-The agent reads [AGENTS.md](AGENTS.md), checks the current state, creates only the missing local configuration, and verifies the complete local Dashboard → Apps Script → Google Sheet path. It reuses a prior installation rather than creating duplicate Sheets or Script projects.
+Codex will inspect the current state, reuse working resources, configure only what is missing, and verify the Dashboard → Apps Script → Google Sheet path.
 
-You only need to approve Google OAuth and the Google pages that intentionally remain interactive: Script Properties and Web App access/deployment settings. You should never need to hand-copy code, IDs, or tokens. See [AI installation](docs/AI_INSTALL.md) for the orchestration contract, [Google setup boundary](docs/GOOGLE_SETUP.md) for the explicit browser fallback, and [troubleshooting](docs/TROUBLESHOOTING.md) for repair.
-
-For an advanced/manual setup, use the steps below.
-
-### Manual setup
-
-#### 1. Create the Apps Script bridge
-
-1. In the Google Sheet, choose **Extensions → Apps Script**.
-2. Copy [`apps-script/Code.gs`](apps-script/Code.gs), [`apps-script/Schema.gs`](apps-script/Schema.gs), and [`apps-script/appsscript.json`](apps-script/appsscript.json) into the editor/project.
-3. In **Project Settings → Script properties**, add:
-
-   | Property | Value |
-   | --- | --- |
-   | `SPREADSHEET_ID` | The ID from the Google Sheet URL. |
-   | `READ_TOKEN` | A long random secret for dashboard reads. |
-   | `WRITE_TOKEN` | A different long random secret if health-export POST is enabled. |
-
-4. Deploy as a **Web app**. Run as the Sheet owner and keep access as narrow as possible.
-5. Test the `/exec` URL with `?token=YOUR_READ_TOKEN`; it should return JSON with `ok: true`.
-
-> The committed script contains no real IDs or tokens. Keep real credentials in Apps Script Script Properties and the hosting platform's secret environment variables, never in Git.
-
-#### 2. Configure dashboard runtime
-
-| Variable | Value |
-| --- | --- |
-| `GOOGLE_SHEET_ENDPOINT` | Apps Script web-app `/exec` URL |
-| `GOOGLE_SHEET_TOKEN` | Same value as `READ_TOKEN` |
-
-Do not commit these values to `.env`, source files, screenshots, or prompts.
-
-#### 3. Optional Apple Health export
-
-Point the exporter at `/exec?writeKey=YOUR_WRITE_TOKEN` and send JSON with a timestamp, a weight/body-mass type, a value, and optionally a unit. The bridge recognizes kg/lb and fractional or percent body-fat values. Test a small range first.
-
-The query key exists because custom headers are not consistently forwarded by Apps Script web apps. Treat the full URL as a secret and rotate `WRITE_TOKEN` if it leaks.
+See [AI installation](docs/AI_INSTALL.md), [manual setup](docs/MANUAL_SETUP.md), or [troubleshooting](docs/TROUBLESHOOTING.md) for details.
 
 ### Why this exists
 
