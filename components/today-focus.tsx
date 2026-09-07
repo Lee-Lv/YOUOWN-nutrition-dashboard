@@ -4,6 +4,7 @@ import { Activity, Droplets, ShieldAlert, Sparkles, Wheat } from "lucide-react";
 import type { CSSProperties } from "react";
 import { useMemo, useState } from "react";
 import { TargetGateMeter, type MeterState } from "./target-gate-meter";
+import type { DashboardLocale } from "../lib/dashboard-locale";
 
 export type FocusSignal = {
   key: "protein" | "fat" | "carbs" | "fiber" | "salt" | "empty" | "steady";
@@ -33,7 +34,14 @@ function compact(value: number) {
   return Number.isInteger(value) ? String(value) : value.toFixed(1);
 }
 
-function headline(signal: FocusSignal) {
+function headline(signal: FocusSignal, locale: DashboardLocale) {
+  if (locale === "en") {
+    if (signal.channel === "empty") return "Awaiting today’s log";
+    if (signal.channel === "calm") return "You’re on track";
+    if (signal.channel === "deficit") return `${compact(Math.abs(signal.delta))} ${signal.unit} to go`;
+    if (signal.channel === "near") return `${Math.round(signal.ratio * 100)}% of target`;
+    return `${compact(signal.delta)} ${signal.unit} over`;
+  }
   if (signal.channel === "empty") return "等待今日记录";
   if (signal.channel === "calm") return "节奏保持得不错";
   if (signal.channel === "deficit") return `还差 ${compact(Math.abs(signal.delta))} ${signal.unit}`;
@@ -41,7 +49,15 @@ function headline(signal: FocusSignal) {
   return `超出 ${compact(signal.delta)} ${signal.unit}`;
 }
 
-function channelLabel(signal: FocusSignal) {
+function channelLabel(signal: FocusSignal, locale: DashboardLocale) {
+  if (locale === "en") {
+    if (signal.channel === "danger") return "ATTENTION";
+    if (signal.channel === "over") return "OVER TARGET";
+    if (signal.channel === "near") return "NEAR LIMIT";
+    if (signal.channel === "deficit") return "ADD MORE";
+    if (signal.channel === "empty") return "TODAY’S FOCUS";
+    return "ON TRACK";
+  }
   if (signal.channel === "danger") return "需要注意";
   if (signal.channel === "over") return "超过目标";
   if (signal.channel === "near") return "接近上限";
@@ -50,7 +66,7 @@ function channelLabel(signal: FocusSignal) {
   return "状态平稳";
 }
 
-export function TodayFocus({ signals }: { signals: FocusSignal[] }) {
+export function TodayFocus({ signals, locale }: { signals: FocusSignal[]; locale: DashboardLocale }) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const activeIndex = signals[selectedIndex] ? selectedIndex : 0;
   const active = signals[activeIndex];
@@ -62,25 +78,25 @@ export function TodayFocus({ signals }: { signals: FocusSignal[] }) {
   return (
     <article className={`today-focus-card ${signals.length === 1 ? "is-single" : ""} channel-${active.channel}`} style={{ "--focus-tone": active.tone } as CSSProperties}>
       <div className="focus-card-header">
-        <div><p className="eyebrow">{channelLabel(active)}</p><h2>今日重点</h2></div>
-        {attentionCount > 1 ? <span className="focus-count"><ShieldAlert size={14} />{attentionCount} 项需注意</span> : null}
+        <div><p className="eyebrow">{channelLabel(active, locale)}</p><h2>{locale === "en" ? "Today’s focus" : "今日重点"}</h2></div>
+        {attentionCount > 1 ? <span className="focus-count"><ShieldAlert size={14} />{locale === "en" ? `${attentionCount} items to watch` : `${attentionCount} 项需注意`}</span> : null}
       </div>
 
       <div className="focus-primary">
         <div className="focus-icon"><Icon size={27} /></div>
         <div className="focus-copy">
           <span className="focus-label">{active.label}</span>
-          <strong>{headline(active)}</strong>
+          <strong>{headline(active, locale)}</strong>
           {active.key !== "empty" && active.key !== "steady" ? <p>{compact(active.value)} / {compact(active.target)} {active.unit} · <b>{Math.round(active.ratio * 100)}%</b></p> : null}
         </div>
       </div>
 
-      {active.key !== "empty" && active.key !== "steady" ? <TargetGateMeter label={active.label} value={active.value} target={active.target} tone={active.tone} showLabels /> : null}
+      {active.key !== "empty" && active.key !== "steady" ? <TargetGateMeter label={active.label} value={active.value} target={active.target} tone={active.tone} showLabels locale={locale} /> : null}
 
       {secondary ? (
-        <button className="focus-secondary" type="button" onClick={() => setSelectedIndex(signals.indexOf(secondary))} aria-label={`查看${secondary.label}重点`}>
+        <button className="focus-secondary" type="button" onClick={() => setSelectedIndex(signals.indexOf(secondary))} aria-label={locale === "en" ? `View ${secondary.label} focus` : `查看${secondary.label}重点`}>
           <span>{secondary.label}</span>
-          <strong>{headline(secondary)}</strong>
+          <strong>{headline(secondary, locale)}</strong>
           {secondary.key !== "empty" && secondary.key !== "steady" ? <small>{Math.round(secondary.ratio * 100)}%</small> : null}
         </button>
       ) : null}

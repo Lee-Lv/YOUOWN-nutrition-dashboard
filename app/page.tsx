@@ -14,6 +14,8 @@ import { TodayFocus, type FocusSignal } from "../components/today-focus";
 import { CalorieUncertaintyMeter } from "../components/calorie-uncertainty-meter";
 import { forecastNextSevenDays } from "../lib/calorie-forecast";
 import { calorieUncertainty, uncertaintyStatus } from "../lib/calorie-uncertainty";
+import { dashboardLocale, formatDashboardDate, localeTag, type DashboardLocale } from "../lib/dashboard-locale";
+import { LanguageSwitcher } from "./language-switcher";
 import { ThemeSwitcher } from "./theme-switcher";
 
 export const dynamic = "force-dynamic";
@@ -102,21 +104,16 @@ function buildDailyCalories(entries: MealEntry[]) {
   return daily;
 }
 
-function dateLabel(date: string) {
-  return new Intl.DateTimeFormat("zh-CN", {
-    timeZone: "UTC",
-    month: "long",
-    day: "numeric",
-    weekday: "short",
-  }).format(new Date(`${date}T00:00:00Z`));
+function dateLabel(date: string, locale: DashboardLocale) {
+  return formatDashboardDate(date, locale, locale === "en"
+    ? { month: "short", day: "numeric", weekday: "short" }
+    : { month: "long", day: "numeric", weekday: "short" });
 }
 
-function shortDate(date: string) {
-  return new Intl.DateTimeFormat("zh-CN", {
-    timeZone: "UTC",
-    month: "numeric",
-    day: "numeric",
-  }).format(new Date(`${date}T00:00:00Z`));
+function shortDate(date: string, locale: DashboardLocale) {
+  return formatDashboardDate(date, locale, locale === "en"
+    ? { month: "short", day: "numeric" }
+    : { month: "numeric", day: "numeric" });
 }
 
 function dashedArc(length: number, circumference: number) {
@@ -144,43 +141,47 @@ function progressState(value: number, target: number) {
 
 type NutritionKey = Exclude<keyof Totals, "calories">;
 
-const nutritionDefinitions: Record<NutritionKey, {
+function nutritionDefinitions(locale: DashboardLocale): Record<NutritionKey, {
   label: string;
   tone: string;
   kind: "hard-limit" | "budget" | "goal";
   overAction: string;
   nearAction: string;
   deficitAction?: string;
-}> = {
+}> {
+  const english = locale === "en";
+  return {
   protein: {
-    label: "蛋白质", tone: "#73f7b4", kind: "goal",
-    overAction: "下一餐不必额外补充蛋白质", nearAction: "保持当前蛋白质节奏", deficitAction: "下一餐优先补充优质蛋白质",
+    label: english ? "Protein" : "蛋白质", tone: "#73f7b4", kind: "goal",
+    overAction: english ? "No extra protein is needed at your next meal" : "下一餐不必额外补充蛋白质", nearAction: english ? "Keep your current protein rhythm" : "保持当前蛋白质节奏", deficitAction: english ? "Prioritize quality protein at your next meal" : "下一餐优先补充优质蛋白质",
   },
   fat: {
-    label: "脂肪", tone: "#ffce71", kind: "budget",
-    overAction: "下一餐优先清淡蛋白与蔬菜", nearAction: "接下来留意烹调用油与酱料",
+    label: english ? "Fat" : "脂肪", tone: "#ffce71", kind: "budget",
+    overAction: english ? "Choose lean protein and vegetables next" : "下一餐优先清淡蛋白与蔬菜", nearAction: english ? "Watch cooking oil and sauces next" : "接下来留意烹调用油与酱料",
   },
   carbs: {
-    label: "碳水", tone: "#8dbdff", kind: "budget",
-    overAction: "下一餐减少主食与甜食", nearAction: "接下来留意主食份量",
+    label: english ? "Carbs" : "碳水", tone: "#8dbdff", kind: "budget",
+    overAction: english ? "Reduce starches and sweets at your next meal" : "下一餐减少主食与甜食", nearAction: english ? "Keep an eye on starch portions next" : "接下来留意主食份量",
   },
   fiber: {
-    label: "膳食纤维", tone: "#73f7b4", kind: "goal",
-    overAction: "纤维已足够，保持饮水", nearAction: "保持当前蔬菜与全谷物节奏", deficitAction: "下一餐补充蔬菜、水果或全谷物",
+    label: english ? "Fiber" : "膳食纤维", tone: "#73f7b4", kind: "goal",
+    overAction: english ? "Fiber is covered; keep drinking water" : "纤维已足够，保持饮水", nearAction: english ? "Keep your vegetables and whole grains on track" : "保持当前蔬菜与全谷物节奏", deficitAction: english ? "Add vegetables, fruit, or whole grains next" : "下一餐补充蔬菜、水果或全谷物",
   },
   salt: {
-    label: "盐分", tone: "#ff9a72", kind: "hard-limit",
-    overAction: "晚餐减少汤汁、腌制品与加工食品", nearAction: "下一餐少汤少酱，留意隐形盐分",
+    label: english ? "Salt" : "盐分", tone: "#ff9a72", kind: "hard-limit",
+    overAction: english ? "Cut back on soup, pickles, and processed foods tonight" : "晚餐减少汤汁、腌制品与加工食品", nearAction: english ? "Use less soup and sauce at your next meal" : "下一餐少汤少酱，留意隐形盐分",
   },
-};
+  };
+}
 
 function createFocusSignal(
   key: NutritionKey,
   value: number,
   target: number,
   channel: FocusSignal["channel"],
+  definitions: ReturnType<typeof nutritionDefinitions>,
 ): FocusSignal {
-  const definition = nutritionDefinitions[key];
+  const definition = definitions[key];
   const ratio = target > 0 ? value / target : 0;
   const delta = value - target;
   const action = channel === "deficit"
@@ -203,40 +204,42 @@ function createFocusSignal(
   };
 }
 
-function buildFocusSignals(totals: Totals, targets: Totals, hour: number, hasEntries: boolean): FocusSignal[] {
+function buildFocusSignals(totals: Totals, targets: Totals, hour: number, hasEntries: boolean, locale: DashboardLocale): FocusSignal[] {
+  const definitions = nutritionDefinitions(locale);
+  const english = locale === "en";
   if (!hasEntries) {
     return [{
-      key: "empty", label: "还没有饮食记录", channel: "empty", state: "calm", value: 0, target: 0,
-      unit: "", ratio: 0, delta: 0, tone: "#73f7b4", action: "记录第一餐后，这里会给出今天最值得关注的一件事。",
+      key: "empty", label: english ? "No food logged yet" : "还没有饮食记录", channel: "empty", state: "calm", value: 0, target: 0,
+      unit: "", ratio: 0, delta: 0, tone: "#73f7b4", action: english ? "Log your first meal and this card will surface today’s most useful cue." : "记录第一餐后，这里会给出今天最值得关注的一件事。",
     }];
   }
 
   const ranked: Array<{ signal: FocusSignal; rank: number }> = [];
-  (Object.keys(nutritionDefinitions) as NutritionKey[]).forEach((key) => {
+  (Object.keys(definitions) as NutritionKey[]).forEach((key) => {
     const value = totals[key];
     const target = targets[key];
     const ratio = target > 0 ? value / target : 0;
-    const { kind } = nutritionDefinitions[key];
+    const { kind } = definitions[key];
     if (key === "salt" && ratio > 1) {
-      ranked.push({ signal: createFocusSignal(key, value, target, "danger"), rank: 4000 + (ratio - 1) * 100 });
+      ranked.push({ signal: createFocusSignal(key, value, target, "danger", definitions), rank: 4000 + (ratio - 1) * 100 });
     } else if ((key === "fat" || key === "carbs") && ratio > 1) {
-      ranked.push({ signal: createFocusSignal(key, value, target, "over"), rank: 3000 + (ratio - 1) * 100 });
+      ranked.push({ signal: createFocusSignal(key, value, target, "over", definitions), rank: 3000 + (ratio - 1) * 100 });
     } else if (key === "protein" && ratio > 1.2) {
-      ranked.push({ signal: createFocusSignal(key, value, target, "over"), rank: 2500 + (ratio - 1.2) * 100 });
+      ranked.push({ signal: createFocusSignal(key, value, target, "over", definitions), rank: 2500 + (ratio - 1.2) * 100 });
     } else if ((key === "salt" || key === "fat" || key === "carbs") && ratio >= 0.85) {
-      ranked.push({ signal: createFocusSignal(key, value, target, "near"), rank: 2000 + ratio * 100 });
+      ranked.push({ signal: createFocusSignal(key, value, target, "near", definitions), rank: 2000 + ratio * 100 });
     } else if (kind === "goal") {
       const expected = hour < 14 ? 0 : hour < 18 ? 0.5 : hour < 21 ? 0.75 : 0.9;
       if (expected > 0 && ratio < expected) {
-        ranked.push({ signal: createFocusSignal(key, value, target, "deficit"), rank: 1000 + (expected - ratio) * 100 });
+        ranked.push({ signal: createFocusSignal(key, value, target, "deficit", definitions), rank: 1000 + (expected - ratio) * 100 });
       }
     }
   });
 
   if (!ranked.length) {
     return [{
-      key: "steady", label: "今日饮食", channel: "calm", state: "calm", value: 0, target: 0,
-      unit: "", ratio: 0, delta: 0, tone: "#73f7b4", action: "当前各项都在合理范围内，按计划完成后续饮食即可。",
+      key: "steady", label: english ? "Today’s nutrition" : "今日饮食", channel: "calm", state: "calm", value: 0, target: 0,
+      unit: "", ratio: 0, delta: 0, tone: "#73f7b4", action: english ? "Everything is within a good range. Continue with your plan." : "当前各项都在合理范围内，按计划完成后续饮食即可。",
     }];
   }
 
@@ -248,15 +251,17 @@ function SegmentedProgress({
   value,
   target,
   tone,
+  locale,
   compactTrack = false,
 }: {
   label: string;
   value: number;
   target: number;
   tone: string;
+  locale: DashboardLocale;
   compactTrack?: boolean;
 }) {
-  return <TargetGateMeter label={label} value={value} target={target} tone={tone} compact={compactTrack} />;
+  return <TargetGateMeter label={label} value={value} target={target} tone={tone} compact={compactTrack} locale={locale} />;
 }
 
 function MacroCard({
@@ -266,6 +271,7 @@ function MacroCard({
   unit,
   icon,
   tone,
+  locale,
 }: {
   label: string;
   value: number;
@@ -273,6 +279,7 @@ function MacroCard({
   unit: string;
   icon: React.ReactNode;
   tone: string;
+  locale: DashboardLocale;
 }) {
   const state = progressState(value, target);
   const overdrive = target > 0 ? Math.min(1, Math.max(0, (value - target) / (target * 0.2))) : 0;
@@ -286,14 +293,17 @@ function MacroCard({
       <div className="macro-value">
         {compact(value)} <span>{unit}</span>
       </div>
-      <div className="macro-target">目标 {compact(target)} {unit}</div>
-      {state === "over" ? <div className="macro-excess">超 {compact(excess)} {unit} · {Math.round((value / target) * 100)}%</div> : null}
-      <SegmentedProgress label={label} value={value} target={target} tone={tone} />
+      <div className="macro-target">{locale === "en" ? "Target" : "目标"} {compact(target)} {unit}</div>
+      {state === "over" ? <div className="macro-excess">{locale === "en" ? "Over" : "超"} {compact(excess)} {unit} · {Math.round((value / target) * 100)}%</div> : null}
+      <SegmentedProgress label={label} value={value} target={target} tone={tone} locale={locale} />
     </article>
   );
 }
 
-export default async function Home() {
+export default async function Home({ searchParams }: { searchParams: Promise<{ lang?: string }> }) {
+  const locale = dashboardLocale((await searchParams).lang);
+  const numberLocale = localeTag(locale);
+  const english = locale === "en";
   const { entries, targets, available, source } = await getDashboardData();
   const today = isoTodayInTokyo();
   const selectedDate = today;
@@ -338,7 +348,7 @@ export default async function Home() {
     1,
   );
   const targetLine = Math.min(100, (targets.calories / chartMax) * 100);
-  const focusSignals = buildFocusSignals(totals, targets, tokyoHour(), selectedEntries.length > 0);
+  const focusSignals = buildFocusSignals(totals, targets, tokyoHour(), selectedEntries.length > 0, locale);
   return (
     <main className="dashboard-shell">
       <CosmicBackground />
@@ -346,14 +356,14 @@ export default async function Home() {
         <header className="topbar">
           <div className="brand">
             <span className="brand-mark"><Utensils size={18} /></span>
-            <span>饮食 Dashboard</span>
+            <span>{english ? "Nutrition Dashboard" : "饮食 Dashboard"}</span>
           </div>
           <div className="topbar-actions">
-            <ThemeSwitcher />
+            <ThemeSwitcher locale={locale} />
             <div className={`sync-status ${source === "sheets" ? "is-live" : ""}`}>
               <span className="sync-dot" />
               <span className="sync-label">
-                {source === "sheets" ? <><span className="sync-source">Google Sheet </span>实时</> : available ? "显示缓存" : "正在连接"}
+                {source === "sheets" ? <><span className="sync-source">Google Sheet </span>{english ? "live" : "实时"}</> : available ? (english ? "Cached view" : "显示缓存") : (english ? "Connecting" : "正在连接")}
               </span>
             </div>
           </div>
@@ -363,25 +373,25 @@ export default async function Home() {
           <article className={`calorie-card state-${calorieState}`}>
             <div className="calorie-copy">
               <div className="eyebrow-row">
-                <p className="eyebrow">{selectedDate === today ? "今天" : "最近记录"}</p>
-                <span>{dateLabel(selectedDate)}</span>
+                <p className="eyebrow">{selectedDate === today ? (english ? "TODAY" : "今天") : (english ? "RECENT LOG" : "最近记录")}</p>
+                <span>{dateLabel(selectedDate, locale)}</span>
               </div>
               <h1>
-                {Math.round(totals.calories).toLocaleString("zh-CN")}
+                {Math.round(totals.calories).toLocaleString(numberLocale)}
                 <span>kcal</span>
               </h1>
               <p className={remaining < 0 ? "remaining is-over" : "remaining"}>
                 {remaining >= 0
-                  ? `还可摄入 ${Math.round(remaining).toLocaleString("zh-CN")} kcal`
-                  : `超过目标 ${Math.round(Math.abs(remaining)).toLocaleString("zh-CN")} kcal`}
+                  ? (english ? `${Math.round(remaining).toLocaleString(numberLocale)} kcal remaining` : `还可摄入 ${Math.round(remaining).toLocaleString(numberLocale)} kcal`)
+                  : (english ? `${Math.round(Math.abs(remaining)).toLocaleString(numberLocale)} kcal over target` : `超过目标 ${Math.round(Math.abs(remaining)).toLocaleString(numberLocale)} kcal`)}
               </p>
               <div className="calorie-meta">
-                <span>每日目标 {targets.calories.toLocaleString("zh-CN")}</span>
+                <span>{english ? "Daily goal" : "每日目标"} {targets.calories.toLocaleString(numberLocale)}</span>
                 <strong>{Math.round(calorieRatio * 100)}%</strong>
               </div>
             </div>
 
-            <div className={`calorie-ring ${calorieOver ? "is-overflow" : ""} state-${calorieState} uncertainty-${rangeStatus}`} aria-label={`热量目标完成 ${Math.round(calorieRatio * 100)}%，估算范围 ${Math.round(calorieRange.low)} 至 ${Math.round(calorieRange.high)} 千卡`}>
+            <div className={`calorie-ring ${calorieOver ? "is-overflow" : ""} state-${calorieState} uncertainty-${rangeStatus}`} aria-label={english ? `Calorie goal ${Math.round(calorieRatio * 100)}%, estimated range ${Math.round(calorieRange.low)} to ${Math.round(calorieRange.high)} kcal` : `热量目标完成 ${Math.round(calorieRatio * 100)}%，估算范围 ${Math.round(calorieRange.low)} 至 ${Math.round(calorieRange.high)} 千卡`}>
               <svg viewBox="0 0 112 112" role="img">
                 {selectedEntries.length ? <>
                   <circle className="ring-uncertainty-band" cx="56" cy="56" r="52" strokeDasharray={`${uncertaintyArcLength} ${uncertaintyCircumference}`} strokeDashoffset={uncertaintyArcOffset} />
@@ -410,39 +420,40 @@ export default async function Home() {
                 center={calorieRange.center}
                 high={calorieRange.high}
                 target={targets.calories}
+                locale={locale}
               />
             ) : null}
           </article>
 
-          <TodayFocus signals={focusSignals} />
+          <TodayFocus signals={focusSignals} locale={locale} />
         </section>
 
-        <section className="macro-grid" aria-label="三大营养素">
-          <MacroCard label="蛋白质" value={totals.protein} target={targets.protein} unit="g" icon={<Activity size={18} />} tone="#73f7b4" />
-          <MacroCard label="脂肪" value={totals.fat} target={targets.fat} unit="g" icon={<Droplets size={18} />} tone="#ffce71" />
-          <MacroCard label="碳水" value={totals.carbs} target={targets.carbs} unit="g" icon={<Wheat size={18} />} tone="#8dbdff" />
+        <section className="macro-grid" aria-label={english ? "Macronutrients" : "三大营养素"}>
+          <MacroCard label={english ? "Protein" : "蛋白质"} value={totals.protein} target={targets.protein} unit="g" icon={<Activity size={18} />} tone="#73f7b4" locale={locale} />
+          <MacroCard label={english ? "Fat" : "脂肪"} value={totals.fat} target={targets.fat} unit="g" icon={<Droplets size={18} />} tone="#ffce71" locale={locale} />
+          <MacroCard label={english ? "Carbs" : "碳水"} value={totals.carbs} target={targets.carbs} unit="g" icon={<Wheat size={18} />} tone="#8dbdff" locale={locale} />
         </section>
 
         <section className="lower-grid">
           <article className="panel trend-panel">
             <div className="panel-heading">
               <div>
-                <p className="eyebrow">历史＋未来 7 天</p>
-                <h2>热量趋势</h2>
+                <p className="eyebrow">{english ? "HISTORY + NEXT 7 DAYS" : "历史＋未来 7 天"}</p>
+                <h2>{english ? "Calorie trend" : "热量趋势"}</h2>
                 <p className={`forecast-summary-line ${calorieForecast.status}`}>
-                  未来7天预计 {Math.round(calorieForecast.weeklyTotal).toLocaleString("zh-CN")} kcal
+                  {english ? "Next 7 days: " : "未来7天预计 "}{Math.round(calorieForecast.weeklyTotal).toLocaleString(numberLocale)} kcal
                   {calorieForecast.trendPercent !== null && calorieForecast.status !== "target-reference"
-                    ? ` · 较近期周均 ${calorieForecast.trendPercent >= 0 ? "+" : ""}${Math.round(calorieForecast.trendPercent)}%`
-                    : " · 目标参考"}
+                    ? (english ? ` · vs. recent weekly avg. ${calorieForecast.trendPercent >= 0 ? "+" : ""}${Math.round(calorieForecast.trendPercent)}%` : ` · 较近期周均 ${calorieForecast.trendPercent >= 0 ? "+" : ""}${Math.round(calorieForecast.trendPercent)}%`)
+                    : (english ? " · goal reference" : " · 目标参考")}
                 </p>
               </div>
               <div className="trend-legend">
-                <span className="target-legend"><i />目标线</span>
-                <span className="actual-legend"><i />实际</span>
-                <span className="forecast-legend"><i />预测</span>
+                <span className="target-legend"><i />{english ? "Goal" : "目标线"}</span>
+                <span className="actual-legend"><i />{english ? "Actual" : "实际"}</span>
+                <span className="forecast-legend"><i />{english ? "Forecast" : "预测"}</span>
               </div>
             </div>
-            <CenteredTrend today={today}>
+            <CenteredTrend today={today} locale={locale}>
               <div
                 className="chart"
                 style={{ "--columns": timelineDays.length } as CSSProperties}
@@ -452,34 +463,34 @@ export default async function Home() {
                   const total = day.actualCalories ?? day.forecastCalories ?? 0;
                   const height = Math.max(total ? 8 : 2, (total / chartMax) * 100);
                   const label = day.actualCalories !== null
-                    ? Math.round(day.actualCalories).toLocaleString("zh-CN")
+                    ? Math.round(day.actualCalories).toLocaleString(numberLocale)
                     : day.forecastCalories !== null
-                      ? Math.round(day.forecastCalories).toLocaleString("zh-CN")
+                      ? Math.round(day.forecastCalories).toLocaleString(numberLocale)
                       : "";
                   return (
-                    <div className="bar-slot" key={day.date} data-date={day.date} aria-label={`${shortDate(day.date)} ${day.actualCalories !== null ? `实际 ${Math.round(day.actualCalories)} kcal` : day.forecastCalories !== null ? `预测 ${Math.round(day.forecastCalories)} kcal` : "没有记录"}`}>
+                    <div className="bar-slot" key={day.date} data-date={day.date} aria-label={`${shortDate(day.date, locale)} ${day.actualCalories !== null ? (english ? `actual ${Math.round(day.actualCalories)} kcal` : `实际 ${Math.round(day.actualCalories)} kcal`) : day.forecastCalories !== null ? (english ? `forecast ${Math.round(day.forecastCalories)} kcal` : `预测 ${Math.round(day.forecastCalories)} kcal`) : (english ? "no record" : "没有记录")}`}>
                       <span className="bar-value">{label}</span>
                       <div
                         className={`bar ${day.date === selectedDate ? "active" : ""} ${day.isForecast ? "forecast" : ""} ${calorieForecast.status === "target-reference" && day.isForecast ? "forecast-reference" : ""} ${day.actualCalories === null && !day.isForecast ? "empty" : ""}`}
                         style={{ height: `${height}%` }}
                       />
-                      <span className="bar-date">{shortDate(day.date)}</span>
+                      <span className="bar-date">{shortDate(day.date, locale)}</span>
                     </div>
                   );
                 })}
               </div>
             </CenteredTrend>
-            <p className="scroll-hint">按历史周总量趋势与星期节奏预测；左右滑动查看更早记录。</p>
+            <p className="scroll-hint">{english ? "Forecast follows weekly history and weekday rhythm. Swipe for earlier days." : "按历史周总量趋势与星期节奏预测；左右滑动查看更早记录。"}</p>
           </article>
 
           <article className="panel recent-panel">
-            <DailyRecent dates={entries.map((entry) => entry.entryDate)} entries={entries} today={today} />
+            <DailyRecent dates={entries.map((entry) => entry.entryDate)} entries={entries} today={today} locale={locale} />
           </article>
         </section>
 
         <footer>
-          <span>刷新页面即可读取 Google Sheet 最新记录</span>
-          <span>Asia / Tokyo</span>
+          <span>{english ? "Refresh to load the latest Google Sheet records" : "刷新页面即可读取 Google Sheet 最新记录"}</span>
+          <div className="footer-actions"><LanguageSwitcher locale={locale} /><span>Asia / Tokyo</span></div>
         </footer>
       </div>
     </main>

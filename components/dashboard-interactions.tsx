@@ -2,6 +2,7 @@
 
 import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { confidenceLabel, formatDashboardDate, type DashboardLocale } from "../lib/dashboard-locale";
 
 type Meal = {
   id: number | string;
@@ -32,8 +33,8 @@ const mealOrder: Record<string, number> = {
   间: 3,
 };
 
-function shortDate(date: string) {
-  return new Intl.DateTimeFormat("zh-CN", { timeZone: "UTC", month: "numeric", day: "numeric" }).format(new Date(`${date}T00:00:00Z`));
+function shortDate(date: string, locale: DashboardLocale) {
+  return formatDashboardDate(date, locale, locale === "en" ? { month: "short", day: "numeric" } : { month: "numeric", day: "numeric" });
 }
 
 function compact(value: number) {
@@ -60,16 +61,16 @@ function orderOf(meal: string) {
   return mealOrder[meal.slice(0, 1)] ?? 4;
 }
 
-export function CenteredTrend({ children, today }: { children: React.ReactNode; today: string }) {
+export function CenteredTrend({ children, today, locale }: { children: React.ReactNode; today: string; locale: DashboardLocale }) {
   const scroller = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const active = scroller.current?.querySelector<HTMLElement>(`[data-date="${today}"]`);
     active?.scrollIntoView({ block: "nearest", inline: "center" });
   }, [today]);
-  return <div ref={scroller} className="chart-scroll" tabIndex={0} aria-label="横向滚动查看全部历史和未来热量趋势">{children}</div>;
+  return <div ref={scroller} className="chart-scroll" tabIndex={0} aria-label={locale === "en" ? "Scroll to view earlier and upcoming calorie trends" : "横向滚动查看全部历史和未来热量趋势"}>{children}</div>;
 }
 
-export function DailyRecent({ dates, entries, today }: { dates: string[]; entries: Meal[]; today: string }) {
+export function DailyRecent({ dates, entries, today, locale }: { dates: string[]; entries: Meal[]; today: string; locale: DashboardLocale }) {
   const availableDates = useMemo(() => Array.from(new Set([today, ...dates])).sort((a, b) => b.localeCompare(a)), [dates, today]);
   const [index, setIndex] = useState(0);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -77,16 +78,16 @@ export function DailyRecent({ dates, entries, today }: { dates: string[]; entrie
   const selected = entries
     .filter((entry) => entry.entryDate === selectedDate)
     .sort((a, b) => orderOf(a.meal) - orderOf(b.meal));
-  const dateLabel = selectedDate === today ? "今天" : shortDate(selectedDate);
+  const dateLabel = selectedDate === today ? (locale === "en" ? "Today" : "今天") : shortDate(selectedDate, locale);
 
   return (
     <>
       <div className="panel-heading">
-        <div><p className="eyebrow">最近记录</p><h2>{dateLabel}</h2></div>
-        <div className="day-controls" aria-label="切换记录日期">
-          <button type="button" aria-label="更早一天" disabled={index >= availableDates.length - 1} onClick={() => { setExpandedId(null); setIndex((value) => Math.min(value + 1, availableDates.length - 1)); }}><ChevronLeft size={17} /></button>
+        <div><p className="eyebrow">{locale === "en" ? "RECENT LOG" : "最近记录"}</p><h2>{dateLabel}</h2></div>
+        <div className="day-controls" aria-label={locale === "en" ? "Change record date" : "切换记录日期"}>
+          <button type="button" aria-label={locale === "en" ? "Earlier day" : "更早一天"} disabled={index >= availableDates.length - 1} onClick={() => { setExpandedId(null); setIndex((value) => Math.min(value + 1, availableDates.length - 1)); }}><ChevronLeft size={17} /></button>
           <span>{index + 1} / {availableDates.length}</span>
-          <button type="button" aria-label="更新一天" disabled={index === 0} onClick={() => { setExpandedId(null); setIndex((value) => Math.max(value - 1, 0)); }}><ChevronRight size={17} /></button>
+          <button type="button" aria-label={locale === "en" ? "Later day" : "更新一天"} disabled={index === 0} onClick={() => { setExpandedId(null); setIndex((value) => Math.max(value - 1, 0)); }}><ChevronRight size={17} /></button>
         </div>
       </div>
       <div className="meal-list">
@@ -111,8 +112,8 @@ export function DailyRecent({ dates, entries, today }: { dates: string[]; entrie
               >
                 <span className="meal-symbol" aria-hidden="true">{entry.meal.slice(0, 1)}</span>
                 <span className="meal-main">
-                  <span className="meal-title"><strong>{entry.foodName}</strong><span className={`confidence confidence-${entry.confidence}`}>{entry.confidence}</span></span>
-                  <span className="meal-summary">{entry.servingDescription || "点击查看完整估算详情"}</span>
+                  <span className="meal-title"><strong>{entry.foodName}</strong><span className={`confidence confidence-${entry.confidence}`}>{confidenceLabel(entry.confidence, locale)}</span></span>
+                  <span className="meal-summary">{entry.servingDescription || (locale === "en" ? "Tap to view the estimate details" : "点击查看完整估算详情")}</span>
                 </span>
                 <span className="meal-kcal"><strong>{Math.round(entry.calories)}</strong><span>kcal</span></span>
                 <ChevronDown className="meal-chevron" size={17} aria-hidden="true" />
@@ -121,29 +122,29 @@ export function DailyRecent({ dates, entries, today }: { dates: string[]; entrie
                 <div>
                   <div className="meal-detail-inner">
                     <section className="meal-detail-serving">
-                      <span>摄入份量</span>
-                      <p>{entry.servingDescription || "没有填写份量说明"}</p>
+                      <span>{locale === "en" ? "PORTION" : "摄入份量"}</span>
+                      <p>{entry.servingDescription || (locale === "en" ? "No portion details provided" : "没有填写份量说明")}</p>
                     </section>
-                    <div className="meal-detail-stats" aria-label="营养估算明细">
-                      <div><span>蛋白质</span><strong>{compact(entry.protein)} g</strong></div>
-                      <div><span>脂肪</span><strong>{compact(entry.fat)} g</strong></div>
-                      <div><span>碳水</span><strong>{compact(entry.carbs)} g</strong></div>
-                      <div><span>纤维</span><strong>{compact(entry.fiber)} g</strong></div>
-                      <div><span>盐分</span><strong>{compact(entry.salt)} g</strong></div>
-                      <div className="meal-error"><span>估算误差</span><strong>{confidenceError(entry.confidence)}</strong></div>
+                    <div className="meal-detail-stats" aria-label={locale === "en" ? "Nutrition estimate details" : "营养估算明细"}>
+                      <div><span>{locale === "en" ? "Protein" : "蛋白质"}</span><strong>{compact(entry.protein)} g</strong></div>
+                      <div><span>{locale === "en" ? "Fat" : "脂肪"}</span><strong>{compact(entry.fat)} g</strong></div>
+                      <div><span>{locale === "en" ? "Carbs" : "碳水"}</span><strong>{compact(entry.carbs)} g</strong></div>
+                      <div><span>{locale === "en" ? "Fiber" : "纤维"}</span><strong>{compact(entry.fiber)} g</strong></div>
+                      <div><span>{locale === "en" ? "Salt" : "盐分"}</span><strong>{compact(entry.salt)} g</strong></div>
+                      <div className="meal-error"><span>{locale === "en" ? "Est. error" : "估算误差"}</span><strong>{confidenceError(entry.confidence)}</strong></div>
                     </div>
-                    <p className="meal-detail-note"><strong>估算说明</strong>{entry.notes || "没有额外说明。"}</p>
+                    <p className="meal-detail-note"><strong>{locale === "en" ? "ESTIMATE NOTES" : "估算说明"}</strong>{entry.notes || (locale === "en" ? "No additional notes." : "没有额外说明。")}</p>
                     <div className="meal-detail-meta">
-                      {entry.source && <span>来源：{entry.source}</span>}
-                      {ratio !== null && ratio !== 100 && <span>摄入比例：{ratio}%</span>}
-                      {time && <span>记录：{time}</span>}
+                      {entry.source && <span>{locale === "en" ? "Source: " : "来源："}{entry.source}</span>}
+                      {ratio !== null && ratio !== 100 && <span>{locale === "en" ? "Amount eaten: " : "摄入比例："}{ratio}%</span>}
+                      {time && <span>{locale === "en" ? "Logged: " : "记录："}{time}</span>}
                     </div>
                   </div>
                 </div>
               </div>
             </article>
           );
-        }) : <div className="empty-state"><strong>当天还没有饮食记录</strong><span>左右切换日期查看其他记录。</span></div>}
+        }) : <div className="empty-state"><strong>{locale === "en" ? "No food logged for this day" : "当天还没有饮食记录"}</strong><span>{locale === "en" ? "Use the arrows to view another day." : "左右切换日期查看其他记录。"}</span></div>}
       </div>
     </>
   );

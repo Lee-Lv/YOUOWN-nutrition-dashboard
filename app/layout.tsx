@@ -2,13 +2,13 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "饮食 Dashboard",
-  description: "私人饮食与营养趋势看板",
-  applicationName: "饮食 Dashboard",
+  title: "Nutrition Dashboard",
+  description: "Personal nutrition and calorie trend dashboard",
+  applicationName: "Nutrition Dashboard",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "饮食",
+    title: "Nutrition",
   },
   icons: {
     icon: "/favicon.svg",
@@ -34,7 +34,7 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{var t=localStorage.getItem("nutrition-dashboard-theme");if(t==="instrument")document.documentElement.dataset.visualTheme="instrument"}catch(e){}`,
+            __html: `try{var t=localStorage.getItem("nutrition-dashboard-theme");if(t==="instrument")document.documentElement.dataset.visualTheme="instrument";var u=new URL(location.href),p=u.searchParams,l=localStorage.getItem("nutrition-dashboard-language");if(!l&&t){l="zh";localStorage.setItem("nutrition-dashboard-language",l)}if(!p.has("lang")&&l==="zh"){p.set("lang","zh");location.replace(u.toString())}else if(p.get("lang")==="en"||p.get("lang")==="zh"){localStorage.setItem("nutrition-dashboard-language",p.get("lang"))}}catch(e){}`,
           }}
         />
       </head>

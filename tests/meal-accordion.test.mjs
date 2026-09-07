@@ -39,7 +39,7 @@ test("recent meals render as collapsed accessible accordions in meal order", asy
     { ...base, id: 2, meal: "晚", foodName: "晚餐" },
     { ...base, id: 1, meal: "早", foodName: "早餐" },
   ];
-  const html = renderToStaticMarkup(React.createElement(DailyRecent, { dates: [base.entryDate], entries, today: base.entryDate }));
+  const html = renderToStaticMarkup(React.createElement(DailyRecent, { dates: [base.entryDate], entries, today: base.entryDate, locale: "zh" }));
 
   assert.match(html, /aria-expanded="false"/);
   assert.match(html, /aria-controls="meal-detail-1"/);
@@ -47,4 +47,15 @@ test("recent meals render as collapsed accessible accordions in meal order", asy
   assert.match(html, /蛋白质/);
   assert.match(html, /估算误差/);
   assert.ok(html.indexOf("早餐") < html.indexOf("晚餐"));
+});
+
+test("recent meals use English dashboard chrome when selected", async () => {
+  const { DailyRecent } = await vite.ssrLoadModule("/components/dashboard-interactions.tsx");
+  const entries = [{ ...base, id: 1, meal: "早", foodName: "Breakfast" }];
+  const html = renderToStaticMarkup(React.createElement(DailyRecent, { dates: [base.entryDate], entries, today: base.entryDate, locale: "en" }));
+
+  assert.match(html, /RECENT LOG/);
+  assert.match(html, /Today/);
+  assert.match(html, /Protein/);
+  assert.match(html, /Est\. error/);
 });

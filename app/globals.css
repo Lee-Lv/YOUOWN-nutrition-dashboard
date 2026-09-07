@@ -1775,9 +1775,58 @@ body {
 footer {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  gap: 12px;
   padding: 18px 3px 0;
   color: #4f655d;
   font-size: 0.67rem;
+}
+
+.footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  white-space: nowrap;
+}
+
+.language-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 5px;
+  color: #68847a;
+  border: 1px solid rgba(113, 198, 157, 0.18);
+  border-radius: 999px;
+  background: rgba(12, 34, 29, 0.42);
+}
+
+.language-switcher svg {
+  margin: 0 1px 0 2px;
+  color: #73f7b4;
+}
+
+.language-switcher button {
+  padding: 3px 5px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #708a81;
+  font: inherit;
+  font-size: 0.61rem;
+  font-weight: 750;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+}
+
+.language-switcher button.is-active {
+  color: #e7fff1;
+  background: rgba(94, 241, 172, 0.16);
+  box-shadow: 0 0 14px rgba(83, 235, 164, 0.12);
+}
+
+.language-switcher button:focus-visible {
+  outline: 2px solid #73f7b4;
+  outline-offset: 2px;
 }
 
 @media (max-width: 820px) {
@@ -1868,6 +1917,13 @@ footer {
   .sync-status > .sync-dot {
     width: 8px;
     height: 8px;
+  }
+
+  footer {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 9px;
+    padding-top: 22px;
   }
 
   .calorie-card {

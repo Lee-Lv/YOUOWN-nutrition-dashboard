@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import type { DashboardLocale } from "../lib/dashboard-locale";
 
 export type MeterState = "calm" | "approaching" | "critical" | "over";
 
@@ -17,6 +18,7 @@ export function TargetGateMeter({
   tone,
   compact = false,
   showLabels = false,
+  locale,
 }: {
   label: string;
   value: number;
@@ -24,6 +26,7 @@ export function TargetGateMeter({
   tone: string;
   compact?: boolean;
   showLabels?: boolean;
+  locale: DashboardLocale;
 }) {
   const ratio = target > 0 ? value / target : 0;
   const state = stateFor(value, target);
@@ -49,7 +52,7 @@ export function TargetGateMeter({
         "--overdrive": overdrive,
       } as CSSProperties}
       role="progressbar"
-      aria-label={`${label} ${percentage}%${state === "over" ? `，超出 ${overflowPercentage}%` : ""}`}
+      aria-label={locale === "en" ? `${label} ${percentage}%${state === "over" ? `, ${overflowPercentage}% over` : ""}` : `${label} ${percentage}%${state === "over" ? `，超出 ${overflowPercentage}%` : ""}`}
       aria-valuemin={0}
       aria-valuemax={target}
       aria-valuenow={value}
@@ -59,7 +62,7 @@ export function TargetGateMeter({
         <span className="target-gate-normal" />
         {isOver ? <><span className="target-gate-overflow" /><span className="target-gate-hatch" aria-hidden="true" /><span className="target-gate-marker" aria-hidden="true"><i /></span><span className="target-gate-core" aria-hidden="true" /></> : null}
       </div>
-      {isOver ? <div className="target-gate-caption">超额 +{overflowPercentage}%</div> : null}
+      {isOver ? <div className="target-gate-caption">{locale === "en" ? `+${overflowPercentage}% over` : `超额 +${overflowPercentage}%`}</div> : null}
     </div>
   );
 }
