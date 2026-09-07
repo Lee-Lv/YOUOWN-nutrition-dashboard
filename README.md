@@ -27,6 +27,30 @@ It is for people who want a useful personal application quickly without first bu
 - Optionally accepts Apple Health / Health Auto Export weight and body-fat records.
 - Keeps source and data model under the owner's control, so an AI coding assistant can implement new features instead of waiting for an app vendor.
 
+### Product idea and UI examples
+
+The dashboard intentionally stays simple: it is a **read-first interface**, not another data-entry form. There are no meal, calorie, or health-input fields in the UI. The intended flow is to describe, correct, or ask for an update in an AI conversation; the AI writes the authorized structured record to the Sheet; the dashboard then visualizes the latest state.
+
+Normal progress is quiet and readable. The uncertainty band communicates that an estimate is an estimate, while the green focus card gives a small, actionable cue.
+
+![Normal dashboard state](docs/images/dashboard-normal-top.jpg)
+
+*Normal state: daily calorie progress, estimate range, today’s focus, and the three macro cards.*
+
+The lower section keeps the history compact: the chart shows actual and forecast values, recent records are grouped by day, and each meal can be expanded for its details.
+
+![Trend and recent records](docs/images/dashboard-normal-lower.jpg)
+
+*History/forecast trend, daily navigation, expandable recent records, and the language selector.*
+
+When a limit is exceeded, the visual hierarchy changes deliberately: the focus card states what is over, shows the absolute excess and percentage, and the meter exposes the 100% gate plus the 120% warning zone.
+
+![Over-target alert state](docs/images/dashboard-over-alert.jpg)
+
+*Over-target state: the warning card and macro meters make the amount over target explicit.*
+
+The screenshots are illustrative product examples. The source of truth remains the connected Sheet; the UI is designed to help you understand and act on that data, not to become a second database.
+
 ### The practical value
 
 ```text
@@ -183,6 +207,30 @@ Do not automate account logins or scrape private services unless explicitly perm
 - 通过私有 Google Apps Script JSON 桥接读取 Sheet，不需要公开整个 Sheet。
 - 可选接入 Apple Health / Health Auto Export，写入体重与体脂记录。
 - 源码和数据模型由自己掌握；需要新功能时，可让 AI 编程助手实现，而不是等待 App 厂商更新。
+
+### 产品理念和界面示意
+
+这个 Dashboard 刻意保持简单：它是一个**以查看为主的界面**，不是另一套数据录入表单。页面里不提供饮食、热量或健康数据的输入框。预期流程是：在 AI 对话里描述、纠正或要求更新；AI 将经过授权的结构化记录写入 Sheet；Dashboard 再把最新状态展示出来。
+
+正常状态保持安静、清晰。误差带提醒你“估算就是估算”，绿色的今日重点卡片只给出少量、可执行的建议。
+
+![正常状态 Dashboard](docs/images/dashboard-normal-top.jpg)
+
+*正常状态：每日热量进度、估算范围、今日重点和三张营养素卡片。*
+
+下面的区域保持紧凑：图表展示实际与预测，最近记录按天组织，每一条饮食记录都可以展开查看明细。
+
+![趋势和最近记录](docs/images/dashboard-normal-lower.jpg)
+
+*历史/预测趋势、按日切换、可展开的最近记录和语言选择器。*
+
+当某个上限被超过时，视觉层级会有意改变：重点卡片直接说明哪一项超标，同时显示超出的绝对值和百分比；进度条还会明确显示 100% 目标线和 120% 警戒区。
+
+![超额提醒状态](docs/images/dashboard-over-alert.jpg)
+
+*超额状态：提醒卡片和营养素进度条把“超出了多少”明确显示出来。*
+
+这些截图是产品界面示意；真正的数据源仍然是连接的 Sheet。UI 的职责是帮助你理解和采取行动，而不是再造一套数据库。
 
 ### 项目的实际利益
 
