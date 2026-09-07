@@ -209,3 +209,7 @@ Do not automate account logins or scrape private services unless explicitly perm
 ### Version
 
 `v1.0.0` is the first release of the open-source template. It ships without personal credentials or health data.
+
+### License
+
+Licensed under the [Apache License 2.0](LICENSE).

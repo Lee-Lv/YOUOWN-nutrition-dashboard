@@ -218,3 +218,7 @@ node --test tests/meal-accordion.test.mjs tests/calorie-uncertainty.test.mjs tes
 ### 版本
 
 `v1.0.0` 是这个开源模板的首个发布版本；不包含任何个人凭据或健康数据。
+
+### License
+
+本项目采用 [Apache License 2.0](LICENSE) 授权。
