@@ -29,6 +29,12 @@
 - 可选接入 Apple Health / Health Auto Export，写入体重与体脂记录。
 - 源码和数据模型都在自己手里；想加功能时，直接让 AI 编程助手帮我改，不用等 App 厂商更新。
 
+### GPT Chat 的 Prompt 和工作流方针
+
+Dashboard 故意只负责看数据：记录和修正发生在对话里，经过确认的数据再写进 Sheet。可直接复用的 Prompt、建议的回复格式，以及安全修改 Sheet 的规则，都放在 [GPT Chat 工作流说明](docs/gpt-chat-prompt.zh-CN.md)；英文版在 [这里](docs/gpt-chat-prompt.md)。
+
+这不是后补的说明，而是项目本身的分工：页面应该是你安静看今天数据的地方；对话才是你随手描述、修正、确认一条记录的地方。
+
 ### 我想要的感觉和界面示意
 
 这个 Dashboard 故意做得简单一点。它主要就是拿来看数据的，不是另一套复杂的录入表单。这里不会放饮食、热量或健康数据的输入框；我想记录什么、哪里需要修改，直接在 AI 对话里说就行。AI 把得到授权的内容写进 Sheet，Dashboard 再把最新结果显示出来。
@@ -69,7 +75,7 @@ Apple Health 自动导出 ──────────────────
 | AI 对话工作流 | 估算与日常更新 | 用自然语言修正记录，比为每个边缘情况做表单更快。 |
 | Google Apps Script | 小型读写桥接 | 把 Sheet、网页和可选健康导出连接起来。 |
 | 本 Web App | 展示与交互 | 不需要原生 App 的发布周期，也能有完整 Dashboard 体验。 |
-| ChatGPT Sites 或其他托管 | 私有发布 | 把个人工具直接作为网页应用使用。 |
+| ChatGPT Sites 或其他托管 | 网页发布 | 把个人工具直接作为网页应用使用。 |
 
 ### 关于费用，我想先说清楚
 
@@ -94,7 +100,7 @@ AI 对话 / 助手 ── 已授权的数据更新 ──► Google Sheet
 Apple Health 导出 ── 可选 POST ─────► Google Apps Script 桥接
                                                │ 带鉴权 JSON
                                                ▼
-                                     私有 Nutrition Dashboard
+                                     你的 Nutrition Dashboard
 ```
 
 Dashboard 在服务端读取 Apps Script 的 `doGet()`。桥接不可用时，如果托管环境配置了缓存/数据库层，项目会尝试该层回退。
@@ -181,13 +187,14 @@ node --test tests/meal-accordion.test.mjs tests/calorie-uncertainty.test.mjs tes
 
 不要在未获服务明确允许的情况下自动化登录账户或抓取私有服务。优先使用官方 API、导出、Webhook 或用户明确授权的集成方式。
 
-### 几条安全提醒
+### 公开仓库前的检查清单
 
-- 仓库保持 private，直到所有秘密与个人数据路径都经过审查。
+- 这个仓库只能以“模板”的形式公开：其中不包含真实 Sheet ID、Apps Script 地址、Token、健康记录或导出日志。
 - 不要提交 Sheet ID、读写 Token、健康记录或导出日志。
 - 读取和写入使用不同 Token；任一泄露后立即轮换。
 - 收紧 Apps Script 的部署访问范围，并只自动化你有权限操作的系统和账户。
+- 不要把凭据写进 AI 对话 Prompt、GitHub Issue、截图或公开的部署配置里；Apps Script 的写入 URL 也应视作秘密。
 
 ### 版本
 
-`v1.0.0` 是首个私有发布版本。
+`v1.0.0` 是这个开源模板的首个发布版本；不包含任何个人凭据或健康数据。

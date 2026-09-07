@@ -1,6 +1,6 @@
 # Nutrition Dashboard
 
-> A small private nutrition dashboard built around **your own Google Sheet**.
+> An open-source, self-hosted nutrition dashboard built around **your own Google Sheet**.
 
 **Language:** [中文 README](README.zh-CN.md)
 
@@ -23,6 +23,12 @@ I also did not want to spend weeks making a native app just to get a personal to
 - Uses a private Google Apps Script JSON bridge instead of making the Sheet public.
 - Can optionally accept Apple Health / Health Auto Export measurements.
 - Keeps the code and data model open, so I can ask an AI coding assistant to change the project when I want.
+
+### The GPT Chat prompt and workflow rules
+
+The dashboard is deliberately read-only: logging and corrections happen in a chat, then the approved data lands in the Sheet. The reusable prompt, a proposed response format, and the rules for safe Sheet edits live in [the GPT Chat workflow guide](docs/gpt-chat-prompt.md). A Chinese version is available [here](docs/gpt-chat-prompt.zh-CN.md).
+
+This is an important part of the project, not an afterthought: the interface is meant to be the calm place where you review your day; chat is the flexible place where you describe, correct, and approve data.
 
 ### The idea and some UI examples
 
@@ -64,7 +70,7 @@ Apple Health export ────────────────────
 | AI chat workflow | Estimation and daily updates | Natural-language corrections are faster than forms for every edge case. |
 | Google Apps Script | Small read/write bridge | Connects Sheets to the dashboard and optional health exports. |
 | This web app | Presentation and interaction | Responsive dashboard, without a native-app release cycle. |
-| ChatGPT Sites or another host | Private publishing | Makes a personal tool available as a web application. |
+| ChatGPT Sites or another host | Deployment | Makes a personal tool available as a web application. |
 
 ### A quick note about cost and platforms
 
@@ -85,7 +91,7 @@ AI chat / assistant ── authorized update ──► Google Sheet
 Apple Health export ── optional POST ──────► Google Apps Script bridge
                                                        │ authenticated JSON
                                                        ▼
-                                            private Nutrition Dashboard
+                                            your Nutrition Dashboard
 ```
 
 The dashboard fetches the Apps Script `doGet()` endpoint server-side. If that bridge is unavailable, the app may fall back to its configured local cache/database layer.
@@ -172,13 +178,14 @@ The backing store does not have to be Google Sheets, and the assistant does not 
 
 Do not automate account logins or scrape private services unless explicitly permitted. Prefer official APIs, exports, webhooks, or user-approved integrations.
 
-### A few security basics
+### Public-repository checklist
 
-- Keep the repository private unless every secret and personal-data path has been reviewed.
+- This repository is safe to publish only as a template: it contains no real Sheet ID, Apps Script URL, token, health record, or exported log.
 - Never commit Sheet IDs, read/write tokens, health records, or exported logs.
 - Use separate read and write tokens; rotate either one after accidental disclosure.
 - Restrict Apps Script deployment access and use only systems/accounts you are authorized to automate.
+- Do not put credentials in an AI chat prompt, an issue, a screenshot, or a public deployment setting. Treat the Apps Script write URL as a secret too.
 
 ### Version
 
-`v1.0.0` is the first private release.
+`v1.0.0` is the first release of the open-source template. It ships without personal credentials or health data.
