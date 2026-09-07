@@ -51,6 +51,20 @@ Dashboard 故意只负责看数据：记录和修正发生在对话里，经过�
 
 *正常状态：每日热量进度、估算范围、今日重点和三张营养素卡片。*
 
+### Chat 工作流示意
+
+输入这一侧故意做成对话。我可以直接告诉 GPT 吃了什么，先看它估算出来的营养数据，确认后再让已授权的工作流更新 Sheet。
+
+![Chat 记录饮食示意](docs/images/chat-meal-log.jpg)
+
+*Chat 示例：一句自然语言的饮食记录，被整理成热量和营养素摘要。*
+
+助手也可以通过已授权的 Google Drive / Google Sheets 连接访问数据源。具体能使用哪些连接器，要看当前账号和产品能力。
+
+![Google Drive 连接示意](docs/images/chat-google-drive.jpg)
+
+*连接示例：选择 Google Drive，作为个人数据所在的位置。*
+
 下面的区域也尽量不做得复杂：图表看实际和预测，最近记录按天排列，每条记录点开就能看明细。
 
 ![趋势和最近记录](docs/images/dashboard-normal-lower.jpg)

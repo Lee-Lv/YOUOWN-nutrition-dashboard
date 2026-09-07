@@ -46,6 +46,20 @@ When everything is normal, the page stays quiet and readable. The uncertainty ba
 
 *Normal state: daily calorie progress, estimate range, today’s focus, and the three macro cards.*
 
+### Chat workflow examples
+
+The input side is intentionally conversational. I can tell GPT what I ate in one sentence, review the estimated nutrients, and let the authorized workflow update my Sheet.
+
+![Chat meal logging example](docs/images/chat-meal-log.jpg)
+
+*Chat example: a natural-language meal note becomes a calorie and nutrient summary.*
+
+The assistant can use an authorized Google Drive / Google Sheets connection to work with the data source. The exact connector options depend on the account and product being used.
+
+![Google Drive connection example](docs/images/chat-google-drive.jpg)
+
+*Connection example: Google Drive is selected as the place where the personal data lives.*
+
 The lower section stays compact. The chart shows actual and forecast values, records are grouped by day, and each meal opens when I want to see the details.
 
 ![Trend and recent records](docs/images/dashboard-normal-lower.jpg)
