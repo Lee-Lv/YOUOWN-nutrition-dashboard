@@ -24,6 +24,21 @@ AI-first personal nutrition tracking with ChatGPT and your own Google Sheets.
 - **Your Sheet is the database.** Data stays inspectable, editable, exportable, and under your control.
 - **The Dashboard stays focused.** It turns the Sheet into progress, uncertainty, alerts, forecasts, and details without becoming a second database.
 
+### Use the AI you already have
+
+YOUOWN does not lock nutrition recognition inside a separate, fixed model. The input can be whatever your chosen AI can understand and whatever your account supports:
+
+- Speak naturally with ChatGPT Voice instead of typing every meal by hand.
+- Send a meal photo, nutrition label, ingredient list, or—when video is available in your AI/account—use a short video as context.
+- Tell the AI the restaurant and menu item, then ask it to check an official menu or other web source when web search is available.
+- Ask for corrections, serving-size comparisons, uncertainty explanations, or a second estimate in the same conversation.
+
+That means the project can cover most of the AI-assisted workflow people expect from nutrition-tracking apps, while the AI remains replaceable. Use ChatGPT, another model, or a customized workflow—the Sheet format and Dashboard do not need to become a new closed platform.
+
+Voice and multimodal input save the most time when you are busy. A capable model with clear input can also be more useful than a low-cost recognition model bundled into an app, but estimates still need review: brands, portions, recipes, photos, and restaurant data can all be uncertain.
+
+There is no separate YOUOWN app fee. If you use capabilities already included in your ChatGPT plan, within its limits, and do not add separately billed APIs, connectors, search services, or hosting, the nutrition workflow can stay at the cost of the subscription you already have. ChatGPT subscriptions and the OpenAI API are billed separately, and feature availability varies by plan and account. See the [official ChatGPT Voice documentation](https://help.openai.com/en/articles/20001274) and [official billing guidance](https://help.openai.com/en/articles/9039756-managing-billing-for-chatgpt-and-the-api-platform).
+
 ### Architecture
 
 ```text
